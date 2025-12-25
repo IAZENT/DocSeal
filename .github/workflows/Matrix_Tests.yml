@@ -2,9 +2,7 @@ name: Python Matrix Tests
 
 on:
   push:
-    branches: [ main, develop]
   pull_request:
-    branches: [ main, develop]
 
 jobs:
   test:
@@ -16,7 +14,7 @@ jobs:
         os: [ubuntu-latest, windows-latest]
         python-version: [3.11, 3.12]
         # 'none' means use cryptography as resolved by the package; other entries pin versions
-        cryptography-version: [none, '42.0.0', 'latest']
+        cryptography-version: [none, '42.0.0']
 
     steps:
       - name: Checkout
