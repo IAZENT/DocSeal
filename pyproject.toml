@@ -23,12 +23,13 @@ dev = [
     "pip-audit",
 ]
 
-[tool.black]
+[tool.ruff]
 line-length = 88
 
-[tool.ruff]
+[tool.ruff.lint]
 select = ["E", "F", "I", "B", "S"]
 ignore = ["S101"]
+
 
 [tool.mypy]
 strict = true
