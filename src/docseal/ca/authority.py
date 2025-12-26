@@ -21,6 +21,13 @@ try:
 except Exception:
     serialize_key_and_certificates = None
 
+# Certificate issuing helper
+try:
+    from .certificates import CertificateIssuer
+except Exception:
+    # For direct module runs, try package import as fallback
+    from docseal.ca.certificates import CertificateIssuer
+
 # When running the module directly, relative imports may fail. Try the
 # package-relative import first and fall back to adding ``src/`` to
 # sys.path and importing absolutely.
@@ -103,6 +110,32 @@ class CertificateAuthority:
                 password.encode()
             ),
         )
+
+    def issue_certificate(
+        self,
+        common_name: str,
+        role: str,
+        validity_days: int = 365,
+    ) -> tuple[rsa.RSAPrivateKey, x509.Certificate]:
+        """Issue a certificate signed by this CA.
+
+        Returns (private_key, certificate).
+        """
+        if not self._private_key or not self._certificate:
+            raise CAInitializationError("CA not initialized")
+
+        issuer = CertificateIssuer(self._private_key, self._certificate)
+        return issuer.issue_certificate(common_name, role, validity_days)
+
+    @property
+    def certificate(self) -> Optional[x509.Certificate]:
+        """Public accessor for the CA certificate."""
+        return self._certificate
+
+    @property
+    def private_key(self) -> Optional[rsa.RSAPrivateKey]:
+        """Public accessor for the CA private key."""
+        return self._private_key
 
 
 __all__ = ["CertificateAuthority"]
