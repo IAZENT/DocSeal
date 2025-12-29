@@ -12,6 +12,8 @@ from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.x509.oid import NameOID
 
+from .revocation import RevocationManager
+
 # PKCS12 serializer lives in a submodule in some cryptography versions.
 serialize_key_and_certificates: Optional[Callable[..., bytes]] = None
 try:
@@ -52,6 +54,7 @@ class CertificateAuthority:
         # construction and later hold concrete values.
         self._private_key: Optional[rsa.RSAPrivateKey] = None
         self._certificate: Optional[x509.Certificate] = None
+        self._revocation_manager: Optional[RevocationManager] = None
 
     def initialize(self, password: str) -> None:
         """Create a new self-signed CA certificate and private key."""
@@ -86,9 +89,28 @@ class CertificateAuthority:
 
             self._private_key = private_key
             self._certificate = certificate
+            # Create a revocation manager bound to the new CA
+            self._revocation_manager = RevocationManager(
+                self._private_key, self._certificate
+            )
 
         except Exception as exc:
             raise CAInitializationError(str(exc)) from exc
+
+    def revoke_certificate(self, cert: x509.Certificate, reason: str) -> None:
+        if not self._revocation_manager:
+            raise CAInitializationError("CA not initialized")
+        self._revocation_manager.revoke(cert.serial_number, reason)
+
+    def generate_crl(self) -> x509.CertificateRevocationList:
+        if not self._revocation_manager:
+            raise CAInitializationError("CA not initialized")
+        return self._revocation_manager.generate_crl()
+
+    def is_revoked(self, cert: x509.Certificate) -> bool:
+        if not self._revocation_manager:
+            raise CAInitializationError("CA not initialized")
+        return self._revocation_manager.is_revoked(cert.serial_number)
 
     def export_pkcs12(self, password: str) -> bytes:
         """Export the CA as a PKCS#12 archive protected by ``password``."""

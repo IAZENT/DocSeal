@@ -35,5 +35,5 @@ def test_certificate_chain_validation():
 
     assert validate_certificate_chain(
         cert,
-        ca.certificate,
+        ca.certificate,  # type: ignore
     )

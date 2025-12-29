@@ -99,3 +99,19 @@ def validate_certificate_chain(
         return False
     except Exception:
         return False
+
+
+def validate_certificate(
+    cert: x509.Certificate,
+    ca_cert: x509.Certificate,
+    is_revoked: bool,
+) -> bool:
+    """Validate a single certificate against a CA cert and revocation status.
+
+    Returns False if the certificate is revoked or signature/validity checks fail.
+    """
+    if is_revoked:
+        return False
+
+    # Reuse the existing chain validation for signature/issuer/validity checks.
+    return validate_certificate_chain(cert, ca_cert)
