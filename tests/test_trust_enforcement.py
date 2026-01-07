@@ -1,16 +1,17 @@
-import pytest
 from pathlib import Path
+
+import pytest
 
 from docseal.ca.authority import CertificateAuthority
 from docseal.ca.revocation import RevocationRegistry
-from docseal.crypto.signing import sign_document, save_signature
+from docseal.crypto.signing import save_signature, sign_document
 from docseal.crypto.verification import verify_document_signature
 
 
 def test_revoked_certificate_is_rejected(tmp_path: Path) -> None:
     """Test that revoked certificates are rejected during verification."""
     ca = CertificateAuthority()
-    ca.initialize(password="strongpass")
+    ca.initialize(password="strongpass")  # noqa: S106
 
     key, cert = ca.issue_certificate("Registrar", "staff")
 
