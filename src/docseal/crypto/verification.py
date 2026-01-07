@@ -46,10 +46,22 @@ def verify_document_signature(
         # 1. Certificate expiry enforcement
         now = datetime.now(timezone.utc)
 
-        if signer_cert.not_valid_before_utc > now:
+        # Convert naive datetimes to UTC for comparison
+        not_before = (
+            signer_cert.not_valid_before_utc
+            if hasattr(signer_cert, "not_valid_before_utc")
+            else signer_cert.not_valid_before.replace(tzinfo=timezone.utc)
+        )
+        not_after = (
+            signer_cert.not_valid_after_utc
+            if hasattr(signer_cert, "not_valid_after_utc")
+            else signer_cert.not_valid_after.replace(tzinfo=timezone.utc)
+        )
+
+        if not_before > now:
             raise ValueError("Certificate not yet valid")
 
-        if signer_cert.not_valid_after_utc < now:
+        if not_after < now:
             raise ValueError("Certificate expired")
 
         # 2. Certificate revocation check
@@ -59,11 +71,14 @@ def verify_document_signature(
 
         # 3. Verify certificate is signed by trusted CA
         ca_public_key = cast(RSAPublicKey, trusted_ca_cert.public_key())
+        sig_hash_algo = signer_cert.signature_hash_algorithm
+        if sig_hash_algo is None:
+            raise ValueError("Certificate has no signature hash algorithm")
         ca_public_key.verify(
             signer_cert.signature,
             signer_cert.tbs_certificate_bytes,
             padding.PKCS1v15(),
-            cast(hashes.HashAlgorithm, signer_cert.signature_hash_algorithm),
+            sig_hash_algo,
         )
 
         # 4. Hash document
