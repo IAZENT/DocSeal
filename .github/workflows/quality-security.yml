@@ -12,7 +12,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      - run: pip install ruff black mypy bandit
+      - run: pip install ruff black mypy types-cryptography cryptography bandit
       - run: black --check .
       - run: ruff check .
       - run: mypy src/docseal
