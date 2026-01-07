@@ -74,9 +74,7 @@ def verify_document_signature(
 
         # 5. Rebuild payload
         payload = (
-            document_hash
-            + document_id.encode("utf-8")
-            + timestamp.encode("utf-8")
+            document_hash + document_id.encode("utf-8") + timestamp.encode("utf-8")
         )
 
         # 6. Verify signature

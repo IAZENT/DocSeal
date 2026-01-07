@@ -35,7 +35,7 @@ def test_revoked_certificate_is_rejected(tmp_path: Path) -> None:
 
 def test_expired_certificate_is_rejected(tmp_path: Path) -> None:
     """Test that expired certificates are rejected during verification.
-    
+
     Note: This test would require creating an expired certificate,
     which is not straightforward with the current CA implementation.
     This is a placeholder for future implementation.
@@ -46,7 +46,7 @@ def test_expired_certificate_is_rejected(tmp_path: Path) -> None:
 
 def test_not_yet_valid_certificate_is_rejected(tmp_path: Path) -> None:
     """Test that future-dated certificates are rejected during verification.
-    
+
     Note: This test would require creating a future-dated certificate,
     which is not straightforward with the current CA implementation.
     This is a placeholder for future implementation.
