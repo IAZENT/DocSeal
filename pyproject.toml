@@ -21,6 +21,7 @@ dev = [
     "ruff",
     "black",
     "mypy",
+    "types-cryptography",
     "pip-audit",
     "bandit",
 ]
