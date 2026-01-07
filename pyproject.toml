@@ -21,6 +21,7 @@ dev = [
     "black",
     "mypy",
     "pip-audit",
+    "bandit",
 ]
 
 [tool.ruff]
