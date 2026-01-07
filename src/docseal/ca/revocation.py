@@ -1,9 +1,39 @@
+import json
 from datetime import datetime, timedelta, timezone
+from pathlib import Path
 from typing import Dict
 
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateKey
+
+
+class RevocationRegistry:
+    """Persistent revocation registry for certificate revocation.
+
+    Stores revoked certificate serial numbers in a JSON file.
+    Simple, persistent, and serializable.
+    """
+
+    def __init__(self, path: Path) -> None:
+        self.path = path
+        self._load()
+
+    def _load(self) -> None:
+        if self.path.exists():
+            self.revoked = set(json.loads(self.path.read_text()))
+        else:
+            self.revoked = set()
+
+    def revoke(self, serial_number: int) -> None:
+        self.revoked.add(serial_number)
+        self._save()
+
+    def is_revoked(self, serial_number: int) -> bool:
+        return serial_number in self.revoked
+
+    def _save(self) -> None:
+        self.path.write_text(json.dumps(sorted(self.revoked)))
 
 
 class RevocationManager:

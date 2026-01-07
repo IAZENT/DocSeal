@@ -17,9 +17,11 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
     "pytest",
+    "pytest-cov",
     "ruff",
     "black",
     "mypy",
+    "types-cryptography",
     "pip-audit",
     "bandit",
 ]

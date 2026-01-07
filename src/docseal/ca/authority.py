@@ -18,10 +18,12 @@ from .revocation import RevocationManager
 serialize_key_and_certificates: Optional[Callable[..., bytes]] = None
 try:
     from cryptography.hazmat.primitives.serialization.pkcs12 import (
-        serialize_key_and_certificates,
+        serialize_key_and_certificates as _serialize_impl,
     )
-except Exception:
-    serialize_key_and_certificates = None
+
+    serialize_key_and_certificates = _serialize_impl
+except Exception:  # noqa: S110
+    pass
 
 # Certificate issuing helper
 try:
