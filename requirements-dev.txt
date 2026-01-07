@@ -1,0 +1,9 @@
+# Development dependencies
+-r requirements.txt
+
+pytest
+ruff
+black
+mypy
+pip-audit
+bandit

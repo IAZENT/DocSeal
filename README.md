@@ -1,20 +1,19 @@
 # DocSeal
 
-DocSeal is a small, educational Python project demonstrating a minimal Certificate Authority (CA), certificate management, revocation handling, a keystore, and document sealing (signing/verification) utilities. It is intended as a coursework sandbox for learning PKI concepts and applied cryptography in Python.
+DocSeal is a small, educational Python project demonstrating a minimal in-memory Certificate Authority (CA), certificate issuance, revocation handling, certificate validation utilities, and detached document signing. It is intended as a coursework sandbox for learning PKI concepts and applied cryptography in Python.
 
 Key ideas: issuance, signing, verification, revocation, and safe key storage.
 
 ## Features
 
-- CA: create and manage root and intermediate certificates, sign CSRs.
-- Keystore: persistent storage for private keys and certificates.
-- Revocation: mark certificates as revoked and list revoked entries.
-- Crypto helpers: signing and verification utilities for documents.
-- CLI/GUI entrypoints: simple runnable interfaces in the source tree.
+- CA: create and manage a self-signed root certificate and issue end-entity certificates.
+- Revocation: mark certificates as revoked and generate a signed CRL.
+- Crypto helpers: certificate chain validation and detached document signing.
+- Tests: pytest-based unit tests for CA initialization, issuance, revocation, validation, and document signing.
 
 ## Requirements
 
-- Python 3.10+
+- Python 3.11+
 - See `pyproject.toml` for declared dependencies.
 
 ## Contributing

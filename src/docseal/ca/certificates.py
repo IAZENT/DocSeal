@@ -4,7 +4,8 @@ from typing import Tuple
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import rsa
-from cryptography.x509.oid import ExtendedKeyUsageOID, NameOID, ObjectIdentifier
+from cryptography.x509 import ObjectIdentifier
+from cryptography.x509.oid import ExtendedKeyUsageOID, NameOID
 
 # Private OID for DocSeal role extension (example enterprise OID)
 DOCSEAL_ROLE_OID = ObjectIdentifier("1.3.6.1.4.1.55555.1.1")
