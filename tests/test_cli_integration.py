@@ -7,6 +7,8 @@ from pathlib import Path
 
 import pytest
 
+from docseal.ca.authority import CertificateAuthority
+
 
 def run_cli_module(*args: str, input_text: str = "") -> subprocess.CompletedProcess:
     """Run CLI as Python module."""
@@ -114,3 +116,101 @@ def test_cli_main_entry():
     parser = create_parser()
     assert parser is not None
     assert parser.prog == "docseal"
+
+
+def test_full_ca_workflow(temp_dir: Path):
+    """Test complete CA workflow: init, issue, info."""
+    ca_dir = Path.home() / ".docseal" / "ca"
+    ca_dir.mkdir(parents=True, exist_ok=True)
+
+    # Initialize CA
+    ca = CertificateAuthority()
+    ca.initialize(password="testpass123")  # noqa: S106
+
+    # Export CA
+    pkcs12 = ca.export_pkcs12(password="testpass123")  # noqa: S106
+    ca_p12_path = ca_dir / "ca.p12"
+    ca_p12_path.write_bytes(pkcs12)
+
+    if ca.certificate:
+        from cryptography.hazmat.primitives import serialization
+
+        pem_data = ca.certificate.public_bytes(encoding=serialization.Encoding.PEM)
+        ca_pem_path = ca_dir / "ca.pem"
+        ca_pem_path.write_bytes(pem_data)
+
+    # Test CA info command
+    result = run_cli_module("ca", "info")
+    assert result.returncode == 0
+    assert "Certificate Authority" in result.stdout
+
+
+def test_sign_and_verify_workflow(temp_dir: Path):
+    """Test full sign and verify workflow."""
+    ca_dir = Path.home() / ".docseal" / "ca"
+    ca_dir.mkdir(parents=True, exist_ok=True)
+
+    # Initialize CA
+    ca = CertificateAuthority()
+    ca.initialize(password="testpass123")  # noqa: S106
+
+    # Export CA certificate
+    if ca.certificate:
+        from cryptography.hazmat.primitives import serialization
+
+        pem_data = ca.certificate.public_bytes(encoding=serialization.Encoding.PEM)
+        ca_pem_path = ca_dir / "ca.pem"
+        ca_pem_path.write_bytes(pem_data)
+
+    # Issue certificate
+    private_key, certificate = ca.issue_certificate(
+        common_name="Test User", role="Tester", validity_days=30
+    )
+
+    # Export certificate as PKCS#12
+    from cryptography.hazmat.primitives.serialization.pkcs12 import (
+        serialize_key_and_certificates,
+    )
+
+    cert_pkcs12 = serialize_key_and_certificates(
+        name=b"test-user",
+        key=private_key,
+        cert=certificate,
+        cas=None,
+        encryption_algorithm=serialization.BestAvailableEncryption(b"certpass"),
+    )
+
+    cert_path = temp_dir / "test.p12"
+    cert_path.write_bytes(cert_pkcs12)
+
+    # Create test document
+    doc_path = temp_dir / "test.txt"
+    doc_path.write_text("Test document content")
+
+    # Sign document
+    sig_path = temp_dir / "test.sig"
+    result = run_cli_module(
+        "sign",
+        "--doc",
+        str(doc_path),
+        "--cert",
+        str(cert_path),
+        "--out",
+        str(sig_path),
+        "--password",
+        "certpass",
+    )
+    assert result.returncode == 0
+    assert sig_path.exists()
+
+    # Verify signature
+    result = run_cli_module(
+        "verify",
+        "--doc",
+        str(doc_path),
+        "--sig",
+        str(sig_path),
+        "--verbose",
+    )
+    assert result.returncode == 0
+    assert "VALID" in result.stdout
