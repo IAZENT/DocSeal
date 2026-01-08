@@ -1,5 +1,7 @@
 """Certificate Authority CLI commands."""
 
+from __future__ import annotations
+
 import argparse
 import sys
 from getpass import getpass
@@ -19,7 +21,9 @@ CA_PEM_PATH = CA_DIR / "ca.pem"
 REVOCATION_PATH = CA_DIR / "crl.json"
 
 
-def register_ca_commands(subparsers: argparse._SubParsersAction) -> None:
+def register_ca_commands(
+    subparsers: argparse._SubParsersAction[argparse.ArgumentParser],
+) -> None:
     """Register CA subcommands."""
     ca_parser = subparsers.add_parser(
         "ca",
@@ -205,6 +209,13 @@ def cmd_ca_issue(args: argparse.Namespace) -> None:
             print("[!] Failed to load CA certificate", file=sys.stderr)
             sys.exit(1)
 
+        # Type check: ensure we have RSA key
+        from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateKey
+
+        if not isinstance(ca_key, RSAPrivateKey):
+            print("[!] CA key is not RSA", file=sys.stderr)
+            sys.exit(1)
+
         # Use loaded CA to issue certificate
         ca = CertificateAuthority()
         ca._private_key = ca_key
@@ -318,12 +329,12 @@ def cmd_ca_info(args: argparse.Namespace) -> None:
         serial = cert.serial_number
 
         # Handle both old and new cryptography APIs
-        try:
+        from datetime import timezone
+
+        if hasattr(cert, "not_valid_before_utc"):
             not_before = cert.not_valid_before_utc
             not_after = cert.not_valid_after_utc
-        except AttributeError:
-            from datetime import timezone
-
+        else:
             not_before = cert.not_valid_before.replace(tzinfo=timezone.utc)
             not_after = cert.not_valid_after.replace(tzinfo=timezone.utc)
 

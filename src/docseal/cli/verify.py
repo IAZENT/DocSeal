@@ -1,5 +1,7 @@
 """Document verification CLI command."""
 
+from __future__ import annotations
+
 import argparse
 import sys
 from pathlib import Path
@@ -17,7 +19,9 @@ REVOCATION_PATH = CA_DIR / "crl.json"
 AUDIT_LOG_PATH = CA_DIR / "audit.log"
 
 
-def register_verify_command(subparsers: argparse._SubParsersAction) -> None:
+def register_verify_command(
+    subparsers: argparse._SubParsersAction[argparse.ArgumentParser],
+) -> None:
     """Register the verify command."""
     verify_parser = subparsers.add_parser(
         "verify",

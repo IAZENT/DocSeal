@@ -1,5 +1,7 @@
 """Document signing CLI command."""
 
+from __future__ import annotations
+
 import argparse
 import sys
 from getpass import getpass
@@ -12,7 +14,9 @@ from cryptography.hazmat.primitives.serialization.pkcs12 import (
 from docseal.crypto.signing import save_signature, sign_document
 
 
-def register_sign_command(subparsers: argparse._SubParsersAction) -> None:
+def register_sign_command(
+    subparsers: argparse._SubParsersAction[argparse.ArgumentParser],
+) -> None:
     """Register the sign command."""
     sign_parser = subparsers.add_parser(
         "sign",
@@ -79,6 +83,13 @@ def cmd_sign(args: argparse.Namespace) -> None:
 
         if not certificate:
             print("[!] No certificate found in bundle", file=sys.stderr)
+            sys.exit(1)
+
+        # Type check: ensure we have RSA key
+        from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateKey
+
+        if not isinstance(private_key, RSAPrivateKey):
+            print("[!] Only RSA keys are supported", file=sys.stderr)
             sys.exit(1)
 
         # Sign document
