@@ -9,6 +9,7 @@ from pathlib import Path
 
 from cryptography import x509
 from cryptography.hazmat.primitives import serialization
+from typing import Any, cast
 
 from docseal.ca.authority import CertificateAuthority
 from docseal.ca.exceptions import CAAlreadyInitialized, CAInitializationError
@@ -242,7 +243,7 @@ def cmd_ca_issue(args: argparse.Namespace) -> None:
 
         pkcs12_data = serialize_key_and_certificates(
             name=args.name.encode("utf-8"),
-            key=private_key,
+            key=cast(Any, private_key),
             cert=certificate,
             cas=None,
             encryption_algorithm=serialization.BestAvailableEncryption(
@@ -332,8 +333,8 @@ def cmd_ca_info(args: argparse.Namespace) -> None:
         from datetime import timezone
 
         if hasattr(cert, "not_valid_before_utc"):
-            not_before = cert.not_valid_before_utc
-            not_after = cert.not_valid_after_utc
+            not_before = getattr(cert, "not_valid_before_utc")
+            not_after = getattr(cert, "not_valid_after_utc")
         else:
             not_before = cert.not_valid_before.replace(tzinfo=timezone.utc)
             not_after = cert.not_valid_after.replace(tzinfo=timezone.utc)
