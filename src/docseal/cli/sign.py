@@ -101,7 +101,7 @@ def cmd_sign(args: argparse.Namespace) -> None:
         save_signature(signature_data, output_path)
 
         # Display info
-        print("✓ Document signed successfully")
+        print("Document signed successfully")
         print(f"  Document:    {doc_path}")
         print(f"  Signature:   {output_path}")
         print(f"  Document ID: {signature_data['document_id']}")

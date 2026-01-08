@@ -164,7 +164,7 @@ def cmd_ca_init(args: argparse.Namespace) -> None:
             pem_data = ca.certificate.public_bytes(encoding=serialization.Encoding.PEM)
             CA_PEM_PATH.write_bytes(pem_data)
 
-        print("✓ CA initialized successfully")
+        print("CA initialized successfully")
         print(f"  PKCS#12: {CA_PKCS12_PATH}")
         print(f"  PEM:     {CA_PEM_PATH}")
         print(f"  Serial:  {ca.certificate.serial_number if ca.certificate else 'N/A'}")
@@ -253,7 +253,7 @@ def cmd_ca_issue(args: argparse.Namespace) -> None:
 
         output_path.write_bytes(pkcs12_data)
 
-        print("✓ Certificate issued successfully")
+        print("Certificate issued successfully")
         print(f"  Name:    {args.name}")
         print(f"  Role:    {args.role}")
         print(f"  Serial:  {certificate.serial_number}")
@@ -280,7 +280,7 @@ def cmd_ca_revoke(args: argparse.Namespace) -> None:
         registry = RevocationRegistry(REVOCATION_PATH)
         registry.revoke(args.serial)
 
-        print("✓ Certificate revoked successfully")
+        print("Certificate revoked successfully")
         print(f"  Serial: {args.serial}")
         print(f"  Reason: {args.reason}")
 

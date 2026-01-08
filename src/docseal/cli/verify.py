@@ -127,7 +127,7 @@ def cmd_verify(args: argparse.Namespace) -> None:
         )
 
         # Success output
-        print("\n✓ SIGNATURE VALID")
+        print("\nSIGNATURE VALID")
         print(f"  Signer:      {result['signer']}")
         print(f"  Document ID: {result['document_id']}")
         print(f"  Timestamp:   {result['timestamp']}")
@@ -137,16 +137,16 @@ def cmd_verify(args: argparse.Namespace) -> None:
 
         if args.verbose:
             print("\n[i] All verification checks passed:")
-            print("    ✓ Certificate trust chain")
-            print("    ✓ Certificate validity period")
+            print("    - Certificate trust chain")
+            print("    - Certificate validity period")
             if not args.no_revocation_check:
-                print("    ✓ Certificate revocation status")
-            print("    ✓ Document hash integrity")
-            print("    ✓ Cryptographic signature")
+                print("    - Certificate revocation status")
+            print("    - Document hash integrity")
+            print("    - Cryptographic signature")
 
     except ValueError as e:
         # Verification failed
-        print("\n✗ SIGNATURE INVALID", file=sys.stderr)
+        print("\nSIGNATURE INVALID", file=sys.stderr)
         print(f"  Reason: {e}", file=sys.stderr)
 
         if audit_logger and not args.no_audit:
