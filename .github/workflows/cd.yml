@@ -10,20 +10,23 @@ jobs:
   cd-pipeline:
     runs-on: ubuntu-latest
     permissions:
-      contents: write
-      packages: write
+      contents: read   # Needed to read the repo
+      packages: write  # Needed for GHCR push
 
     steps:
+      # Checkout the code
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Set version
+      # Set version variables
+      - name: Set version environment variables
         run: |
           VERSION=${GITHUB_REF#refs/tags/}
           echo "VERSION=$VERSION" >> $GITHUB_ENV
           echo "VERSION_SHORT=${VERSION#v}" >> $GITHUB_ENV
 
+      # Login to GHCR using Personal Access Token
       - name: Log in to GHCR
         uses: docker/login-action@v3
         with:
@@ -31,9 +34,11 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GHCR_PAT }}
 
+      # Set lowercase repo name
       - name: Set lowercase repo name
         run: echo "REPO_LOWERCASE=$(echo ${{ github.repository }} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
 
+      # Build and push Docker image
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
@@ -44,6 +49,7 @@ jobs:
             ghcr.io/${{ env.REPO_LOWERCASE }}:${{ env.VERSION_SHORT }}
             ghcr.io/${{ env.REPO_LOWERCASE }}:latest
 
+      # Generate changelog
       - name: Generate changelog
         run: |
           LAST_TAG=$(git describe --tags --abbrev=0 $(git rev-list --tags --skip=1 --max-count=1) 2>/dev/null || echo "")
@@ -53,9 +59,12 @@ jobs:
             git log $LAST_TAG..HEAD --oneline --format="- %s" > changelog.txt
           fi
 
+      # Create GitHub release
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
         with:
+          tag_name: ${{ env.VERSION }}
+          name: Release ${{ env.VERSION }}
           body_path: changelog.txt
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GHCR_PAT }}
