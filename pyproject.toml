@@ -34,5 +34,8 @@ select = ["E", "F", "I", "B", "S"]
 ignore = ["S101"]
 
 
+[project.scripts]
+docseal = "docseal.cli.main:main"
+
 [tool.mypy]
 strict = true

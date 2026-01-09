@@ -45,8 +45,12 @@ Thumbs.db
 
 .docseal/
 *.pem
+*.p12
+*.sig
 *.docseal
 *.encrypted
 *.decrypted
+crl.json
+audit.log
 
 docseal-root-ca.p12
