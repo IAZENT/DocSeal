@@ -332,12 +332,9 @@ def cmd_ca_info(args: argparse.Namespace) -> None:
         # Handle both old and new cryptography APIs
         from datetime import timezone
 
-        if hasattr(cert, "not_valid_before_utc"):
-            not_before = cert.not_valid_before_utc
-            not_after = cert.not_valid_after_utc
-        else:
-            not_before = cert.not_valid_before.replace(tzinfo=timezone.utc)
-            not_after = cert.not_valid_after.replace(tzinfo=timezone.utc)
+        # Both attributes are available in current cryptography versions
+        not_before = cert.not_valid_before.replace(tzinfo=timezone.utc)
+        not_after = cert.not_valid_after.replace(tzinfo=timezone.utc)
 
         print("Certificate Authority Information:")
         print(f"  Subject:     {subject}")
