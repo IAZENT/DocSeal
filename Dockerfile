@@ -1,5 +1,5 @@
 # Multi-stage build for optimized image size
-FROM python:3.11-slim as builder
+FROM python:3.11-slim AS builder
 
 # Set working directory
 WORKDIR /app
@@ -30,8 +30,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Copy wheels from builder
 COPY --from=builder /app/wheels /wheels
 
-# Copy project files for reference
-COPY --from=builder /app/README.md /app/LICENSE /app/
+# Copy documentation files from builder
+COPY --from=builder /app/README.md /app/
+COPY --from=builder /app/LICENSE /app/
 
 # Install the package from wheels
 RUN pip install --upgrade pip && \
