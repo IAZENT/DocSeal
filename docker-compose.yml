@@ -1,0 +1,63 @@
+version: '3.8'
+
+services:
+  docseal:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: docseal:latest
+    container_name: docseal-app
+    
+    # Mount volumes for persistent data and document access
+    volumes:
+      - ./documents:/home/docseal/data/documents
+      - ./certs:/home/docseal/data/certs
+      - ./signatures:/home/docseal/data/signatures
+      - ./logs:/home/docseal/data/logs
+    
+    # Environment variables (optional)
+    environment:
+      - PYTHONUNBUFFERED=1
+    
+    # Interactive mode with TTY
+    stdin_open: true
+    tty: true
+    
+    # Restart policy
+    restart: unless-stopped
+    
+    # Resource limits (optional)
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 512M
+        reservations:
+          cpus: '0.5'
+          memory: 256M
+
+  # Development service with mounted source code
+  docseal-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    image: docseal:dev
+    container_name: docseal-dev
+    
+    volumes:
+      - .:/app
+      - ./documents:/app/documents
+      - ./certs:/app/certs
+      - ./signatures:/app/signatures
+      - ./logs:/app/logs
+    
+    environment:
+      - PYTHONUNBUFFERED=1
+    
+    stdin_open: true
+    tty: true
+    
+    restart: unless-stopped
+    
+    # Run in development mode
+    command: bash
