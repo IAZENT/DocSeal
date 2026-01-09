@@ -3,7 +3,7 @@ name: CD - Release and Deploy
 on:
   push:
     tags:
-      - 'v*.*.*'  # Trigger on version tags (e.g., v0.1.0)
+      - 'v*.*.*' 
 
 jobs:
   release:
@@ -14,7 +14,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # Full history for changelog generation
+          fetch-depth: 0  
       
       - name: Generate changelog
         id: changelog
