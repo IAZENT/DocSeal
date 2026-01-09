@@ -44,9 +44,6 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
       
-      - name: Set lowercase repo name
-        run: echo "REPO_LOWERCASE=$(echo ${{ github.repository }} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
-      
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
       
@@ -64,8 +61,8 @@ jobs:
           file: ./Dockerfile
           push: true
           tags: |
-            ghcr.io/${{ env}}:${{ github.ref_name }}
-            ghcr.io/${{ env}}:latest
+            ghcr.io/${{ github.repository }}:${{ github.ref_name }}
+            ghcr.io/${{ github.repository }}:latest
           labels: |
             org.opencontainers.image.title=DocSeal
             org.opencontainers.image.description=Secure academic document signing and verification tool
@@ -91,8 +88,8 @@ jobs:
             
             ### Docker Image
             ```bash
-            docker pull ghcr.io/${{ github.repository}}:${{ github.ref_name }}
-            docker run --rm ghcr.io/${{ github.repository}}:${{ github.ref_name }} --help
+            docker pull ghcr.io/${{ github.repository }}:${{ github.ref_name }}
+            docker run --rm ghcr.io/${{ github.repository }}:${{ github.ref_name }} --help
             ```
             
             ### Python Package
