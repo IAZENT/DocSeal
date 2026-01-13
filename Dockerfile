@@ -22,8 +22,8 @@ RUN apt-get update \
  && python3.11 /tmp/get-pip.py \
  && ln -sf /usr/bin/python3.11 /usr/bin/python \
  && python -m pip install --upgrade pip \
- && if [ -f requirements.txt ]; then python -m pip install --no-cache-dir -r requirements.txt; fi \
- && python -m pip install --no-cache-dir . \
+ && if [ -f requirements.txt ]; then python -m pip install --break-system-packages --no-cache-dir -r requirements.txt; fi \
+ && python -m pip install --break-system-packages --no-cache-dir . \
  && apt-get purge -y build-essential wget \
  && apt-get autoremove -y \
  && apt-get clean \
