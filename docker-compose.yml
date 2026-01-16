@@ -1,0 +1,63 @@
+version: '3.8'
+
+services:
+  docseal:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: docseal:latest
+    container_name: docseal
+    volumes:
+      # Mount CA directory (persists certificates)
+      - docseal-ca:/home/docseal/.docseal/ca
+      # Mount data directories for documents, certs, signatures
+      - ./data/documents:/home/docseal/data/documents:rw
+      - ./data/certs:/home/docseal/data/certs:rw
+      - ./data/signatures:/home/docseal/data/signatures:rw
+    environment:
+      - PYTHONUNBUFFERED=1
+      - DOCSEAL_HOME=/home/docseal/.docseal
+    working_dir: /home/docseal/data
+    user: "1000:1000"
+    stdin_open: true
+    tty: true
+    healthcheck:
+      test: ["CMD", "docseal", "--version"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 5s
+
+  docseal-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    image: docseal:dev
+    container_name: docseal-dev
+    volumes:
+      # Mount source code for development
+      - ./src:/app/src:rw
+      - ./tests:/app/tests:ro
+      - ./pyproject.toml:/app/pyproject.toml:ro
+      # Mount CA directory
+      - docseal-ca-dev:/home/docseal/.docseal/ca
+      # Mount data directories
+      - ./data/documents:/home/docseal/data/documents:rw
+      - ./data/certs:/home/docseal/data/certs:rw
+      - ./data/signatures:/home/docseal/data/signatures:rw
+    environment:
+      - PYTHONUNBUFFERED=1
+      - PYTHONDONTWRITEBYTECODE=1
+      - DOCSEAL_HOME=/home/docseal/.docseal
+      - PYTHONPATH=/app/src
+    working_dir: /app
+    user: "1000:1000"
+    stdin_open: true
+    tty: true
+
+volumes:
+  docseal-ca:
+    driver: local
+  docseal-ca-dev:
+    driver: local
+

@@ -4,13 +4,14 @@
 .gitattributes
 
 # Python
-__pycache__
+__pycache__/
 *.py[cod]
 *$py.class
 *.so
 .Python
 env/
 venv/
+.venv/
 ENV/
 build/
 develop-eggs/
@@ -35,6 +36,8 @@ pip-delete-this-directory.txt
 htmlcov/
 .tox/
 .hypothesis/
+.mypy_cache/
+.ruff_cache/
 
 # IDE
 .vscode/
@@ -43,34 +46,49 @@ htmlcov/
 *.swo
 *~
 .DS_Store
+Thumbs.db
 
 # Testing
 .pytest_cache/
 .coverage
 htmlcov/
+coverage.xml
 .tox/
 .hypothesis/
-coverage.xml
 
 # Docker
 docker-compose.override.yml
-.dockerignore
 Dockerfile.dev
+.dockerignore
 
-# CI
+# CI/CD
 .github/
 
-# Documentation
+# Documentation (keep README.md for Docker Hub)
 docs/
 *.md
+!README.md
 LICENSE
 
-# Development
+# Development files
 requirements-dev.txt
 .env
 .env.local
 .env.*.local
 tests/
+scripts/
+
+# User data (should not be in image)
+.docseal/
+*.pem
+*.p12
+*.sig
+*.docseal
+*.encrypted
+*.decrypted
+crl.json
+audit.log
+docseal-root-ca.p12
 
 # Misc
 *.log
@@ -80,3 +98,4 @@ temp/
 node_modules/
 package-lock.json
 yarn.lock
+data/
