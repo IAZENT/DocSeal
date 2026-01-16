@@ -66,8 +66,10 @@ jobs:
           tags: docseal:test
           cache-from: type=gha
           cache-to: type=gha,mode=max
+          load: true
       
       - name: Test Docker image
         run: |
+          docker images | grep docseal
           docker run --rm docseal:test --version
           docker run --rm docseal:test --help
