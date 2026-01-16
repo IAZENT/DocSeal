@@ -1,0 +1,50 @@
+# Development Dockerfile for DocSeal
+# Includes development dependencies and mounts source code
+
+FROM python:3.11-slim
+
+# Set working directory
+WORKDIR /app
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    git \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create non-root user
+RUN groupadd -r docseal && useradd -r -g docseal -u 1000 docseal && \
+    mkdir -p /home/docseal/.docseal/ca && \
+    chown -R docseal:docseal /home/docseal
+
+# Copy dependency files
+COPY requirements.txt requirements-dev.txt ./
+
+# Install all dependencies (runtime + dev)
+RUN pip install --no-cache-dir -r requirements.txt && \
+    pip install --no-cache-dir -r requirements-dev.txt
+
+# Copy application code (will be overridden by volume mount in docker-compose)
+COPY src/ ./src/
+COPY pyproject.toml ./
+
+# Install the package in editable mode
+RUN pip install --no-cache-dir -e . && \
+    chown -R docseal:docseal /app
+
+# Set environment variables
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV DOCSEAL_HOME=/home/docseal/.docseal
+ENV PYTHONPATH=/app/src:$PYTHONPATH
+
+# Switch to non-root user
+USER docseal
+
+# Set home directory
+ENV HOME=/home/docseal
+
+# Default command
+ENTRYPOINT ["docseal"]
+CMD ["--help"]
+

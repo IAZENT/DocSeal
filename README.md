@@ -22,6 +22,26 @@ DocSeal is a secure academic document signing and verification system built with
 
 ## Quick Start
 
+### Option 1: Using Docker (Easiest)
+
+```bash
+# Pull the image from GitHub Container Registry
+docker pull ghcr.io/yourusername/docseal:latest
+
+# Run DocSeal
+docker run --rm ghcr.io/yourusername/docseal:latest --help
+
+# Or use docker-compose
+git clone https://github.com/yourusername/docseal.git
+cd docseal
+docker-compose up -d docseal
+docker-compose exec docseal ca init --password mypassword123
+```
+
+See [DOCKER.md](./DOCKER.md) for detailed Docker usage.
+
+### Option 2: Python Installation
+
 ### 1. Clone the Repository
 
 ```bash
