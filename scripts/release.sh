@@ -92,14 +92,14 @@ This is the $VERSION release of DocSeal.
 
 ## Docker Image
 
-ghcr.io/yourusername/docseal:$VERSION_NO_V
+ghcr.io/IAZENT/docseal:$VERSION_NO_V
 
 ## Installation
 
 ### Docker
 \`\`\`bash
-docker pull ghcr.io/yourusername/docseal:$VERSION_NO_V
-docker run --rm ghcr.io/yourusername/docseal:$VERSION_NO_V --help
+docker pull ghcr.io/IAZENT/docseal:$VERSION_NO_V
+docker run --rm ghcr.io/IAZENT/docseal:$VERSION_NO_V --help
 \`\`\`
 
 ### Python
@@ -132,5 +132,5 @@ echo "  4. Publish to PyPI"
 echo "  5. Create GitHub Release"
 echo ""
 echo -e "${YELLOW}Monitor the workflow:${NC}"
-echo "  https://github.com/yourusername/docseal/actions"
+echo "  https://github.com/IAZENT/docseal/actions"
 echo ""

@@ -29,6 +29,11 @@ LABEL org.opencontainers.image.title="DocSeal"
 LABEL org.opencontainers.image.description="PKI-based document signing and verification system"
 LABEL org.opencontainers.image.vendor="DocSeal"
 
+# Install runtime packages
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    bash \
+    && rm -rf /var/lib/apt/lists/*
+
 # Create non-root user
 RUN groupadd -r docseal && useradd -r -g docseal -u 1000 docseal && \
     mkdir -p /home/docseal/.docseal/ca && \
@@ -60,9 +65,9 @@ USER docseal
 # Set home directory
 ENV HOME=/home/docseal
 
-# Default command
-ENTRYPOINT ["docseal"]
-CMD ["bash"]
+# Default shell
+ENTRYPOINT ["/bin/bash"]
+CMD ["-l"]
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \

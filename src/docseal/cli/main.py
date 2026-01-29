@@ -31,7 +31,7 @@ Examples:
   docseal decrypt --envelope data.dseal --private-key recipient_key.pem \\
     --verify signer.pem
 
-For more information, visit: https://github.com/yourusername/docseal
+For more information, visit: https://github.com/IAZENT/docseal
         """,
     )
 
