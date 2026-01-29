@@ -95,7 +95,7 @@ def test_verify_help():
     result = run_cli("verify", "--help")
     assert result.returncode == 0
     assert "Verify" in result.stdout
-    assert "--doc" in result.stdout or "--envelope" in result.stdout
+    assert "--doc" in result.stdout
     assert "--sig" in result.stdout
 
 

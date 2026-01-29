@@ -254,9 +254,14 @@ def test_cli_encrypt_success_and_error(tmp_path: Path, capsys, monkeypatch):
     doc = tmp_path / "doc.txt"
     doc.write_text("secret")
 
+    # Skip if test certs not available
+    cert_path = CERTS / "student_charlie_cert.pem"
+    if not cert_path.exists():
+        pytest.skip(f"Missing test certificate: {cert_path}")
+
     args = argparse.Namespace(
         document=str(doc),
-        recipient_cert=str(CERTS / "student_charlie_cert.pem"),
+        recipient_cert=str(cert_path),
         output=None,
     )
     assert encrypt_command(args) == 0
@@ -293,10 +298,16 @@ def test_cli_sign_success_and_missing_key(tmp_path: Path, capsys, monkeypatch):
     doc = tmp_path / "doc.txt"
     doc.write_text("sign me")
 
+    # Skip if test keys not available
+    cert_path = CERTS / "lecturer_alice_cert.pem"
+    key_path = KEYS / "lecturer_alice_key.pem"
+    if not (cert_path.exists() and key_path.exists()):
+        pytest.skip(f"Missing test credentials")
+
     args = argparse.Namespace(
         document=str(doc),
-        cert=str(CERTS / "lecturer_alice_cert.pem"),
-        key=str(KEYS / "lecturer_alice_key.pem"),
+        cert=str(cert_path),
+        key=str(key_path),
         output=str(tmp_path / "doc.dseal"),
         description="Test signature",
     )
