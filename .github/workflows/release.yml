@@ -53,9 +53,5 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
           platforms: linux/amd64,linux/arm64
-            - `${{ env.REGISTRY }}/${{ steps.img.outputs.image }}:latest`
-          files: dist/*
-          draft: false
-          prerelease: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

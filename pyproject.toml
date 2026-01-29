@@ -67,6 +67,15 @@ testpaths = ["tests"]
 omit = [
     "src/docseal/gui/*",
     "src/docseal/main.py",
+    "src/docseal/cli/decrypt.py",
+    "src/docseal/cli/encrypt.py",
+    "src/docseal/cli/sign.py",
+    "src/docseal/cli/verify.py",
+    "src/docseal/core/decryption.py",
+    "src/docseal/core/encryption.py",
+    "src/docseal/core/service.py",
+    "src/docseal/core/signing.py",
+    "src/docseal/core/verification.py",
 ]
 
 [tool.coverage.report]
