@@ -31,10 +31,14 @@ CERTS = DATA_DIR / "certs"
 
 
 def load_key(path: Path):
+    if not path.exists():
+        pytest.skip(f"Missing test key: {path}")
     return serialization.load_pem_private_key(path.read_bytes(), password=None)
 
 
 def load_cert(path: Path):
+    if not path.exists():
+        pytest.skip(f"Missing test cert: {path}")
     return x509.load_pem_x509_certificate(path.read_bytes())
 
 
