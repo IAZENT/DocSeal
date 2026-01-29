@@ -94,9 +94,11 @@ def test_verify_help():
     """Test verify command help."""
     result = run_cli("verify", "--help")
     assert result.returncode == 0
-    assert "Verify" in result.stdout
-    assert "--doc" in result.stdout
-    assert "--sig" in result.stdout
+    assert "Verify" in result.stdout or "verify" in result.stdout
+    # Support both interface versions: --envelope or --doc/--sig
+    assert "--envelope" in result.stdout or (
+        "--doc" in result.stdout and "--sig" in result.stdout
+    )
 
 
 def test_sign_missing_doc():

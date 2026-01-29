@@ -302,7 +302,7 @@ def test_cli_sign_success_and_missing_key(tmp_path: Path, capsys, monkeypatch):
     cert_path = CERTS / "lecturer_alice_cert.pem"
     key_path = KEYS / "lecturer_alice_key.pem"
     if not (cert_path.exists() and key_path.exists()):
-        pytest.skip(f"Missing test credentials")
+        pytest.skip("Missing test credentials")
 
     args = argparse.Namespace(
         document=str(doc),
