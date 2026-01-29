@@ -1,5 +1,5 @@
 # Multi-stage Dockerfile for DocSeal
-# Production-ready image with minimal size and GUI support
+# Production-ready image with minimal size
 
 # Build stage
 FROM python:3.11-slim AS builder
@@ -23,26 +23,15 @@ FROM python:3.11-slim
 
 # Metadata
 LABEL maintainer="DocSeal Team"
-LABEL description="Secure academic document signing and verification tool with GUI"
-LABEL version="2.0.0"
+LABEL description="Secure academic document signing and verification tool"
+LABEL version="0.1.0"
 LABEL org.opencontainers.image.title="DocSeal"
 LABEL org.opencontainers.image.description="PKI-based document signing and verification system"
 LABEL org.opencontainers.image.vendor="DocSeal"
 
-# Install GUI runtime dependencies and other system libraries
+# Install runtime packages
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    libgl1-mesa-glx \
-    libglib2.0-0 \
-    libdbus-1-3 \
-    libfontconfig1 \
-    libfreetype6 \
-    libx11-6 \
-    libxext6 \
-    libxrender1 \
-    libxkbcommon0 \
-    libxkbcommon-x11-0 \
-    libssl3 \
-    ca-certificates \
+    bash \
     && rm -rf /var/lib/apt/lists/*
 
 # Create non-root user
@@ -76,6 +65,10 @@ USER docseal
 # Set home directory
 ENV HOME=/home/docseal
 
-# Keep container running with interactive bash shell
+# Default shell
 ENTRYPOINT ["/bin/bash"]
-CMD ["-i"]
+CMD ["-l"]
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD docseal --version || exit 1
