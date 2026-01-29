@@ -43,7 +43,7 @@ For more information, visit: https://github.com/IAZENT/docseal
 
     subparsers = parser.add_subparsers(
         dest="command",
-        required=False,
+        required=True,
         help="Available commands",
     )
 
@@ -61,11 +61,6 @@ def main() -> int:
     """Main CLI entry point."""
     parser = create_parser()
     args = parser.parse_args()
-
-    # Show help when no subcommand is provided
-    if args.command is None:
-        parser.print_help()
-        return 0
 
     try:
         # Execute the command function associated with the subparser
