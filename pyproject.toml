@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "docseal"
-version = "2.0.0"
+version = "2.0.1"
 description = "Secure academic document signing and verification tool"
 authors = [{ name = "Rupesh Thakur" }]
 readme = "README.md"
