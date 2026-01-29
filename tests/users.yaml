@@ -1,0 +1,67 @@
+# Test Users for DocSeal Integration Tests
+# Each user has RSA-2048 keys and X.509 certificates
+
+users:
+  registrar:
+    name: "Registry Authority"
+    email: "registrar@university.edu"
+    role: "registrar"
+    key_file: "data/keys/registrar_key.pem"
+    cert_file: "data/certs/registrar_cert.pem"
+    description: "Institution certificate authority"
+
+  lecturer_alice:
+    name: "Dr. Alice Smith"
+    email: "alice@university.edu"
+    role: "lecturer"
+    key_file: "data/keys/lecturer_alice_key.pem"
+    cert_file: "data/certs/lecturer_alice_cert.pem"
+    description: "Computer Science lecturer"
+
+  lecturer_bob:
+    name: "Prof. Bob Johnson"
+    email: "bob@university.edu"
+    role: "lecturer"
+    key_file: "data/keys/lecturer_bob_key.pem"
+    cert_file: "data/certs/lecturer_bob_cert.pem"
+    description: "Mathematics lecturer"
+
+  student_charlie:
+    name: "Charlie Brown"
+    email: "charlie@student.university.edu"
+    role: "student"
+    key_file: "data/keys/student_charlie_key.pem"
+    cert_file: "data/certs/student_charlie_cert.pem"
+    description: "First year Computer Science student"
+
+  student_diana:
+    name: "Diana Prince"
+    email: "diana@student.university.edu"
+    role: "student"
+    key_file: "data/keys/student_diana_key.pem"
+    cert_file: "data/certs/student_diana_cert.pem"
+    description: "Third year Physics student"
+
+  employer_eve:
+    name: "Eve Engineering"
+    email: "hiring@eveengineering.com"
+    role: "employer"
+    key_file: "data/keys/employer_eve_key.pem"
+    cert_file: "data/certs/employer_eve_cert.pem"
+    description: "Technology company recruiter"
+
+# Common crypto settings for all test users
+crypto:
+  key_algorithm: "RSA"
+  key_size: 2048
+  signing_algorithm: "RSA-PSS"
+  hash_algorithm: "SHA256"
+  encryption_algorithm: "AES-256-GCM"
+  encoding: "PEM"
+
+# Certificate settings
+certificates:
+  version: "X.509 v3"
+  validity_days: 365
+  issuer: "Test Authority"
+  serial_number_base: 1000

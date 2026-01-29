@@ -1,0 +1,22 @@
+#!/usr/bin/env python3
+"""GUI launcher for DocSeal."""
+
+import sys
+from PyQt6.QtWidgets import QApplication
+from docseal.gui import MainWindow
+
+
+def main() -> int:
+    """Launch the GUI application."""
+    app = QApplication(sys.argv)
+    app.setApplicationName("DocSeal")
+    app.setApplicationVersion("0.9.0")
+
+    window = MainWindow()
+    window.show()
+
+    return app.exec()
+
+
+if __name__ == "__main__":
+    sys.exit(main())

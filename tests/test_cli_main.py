@@ -1,7 +1,5 @@
 from types import SimpleNamespace
 
-import pytest
-
 import docseal.cli.main as cli_main
 
 
@@ -15,10 +13,8 @@ def test_main_handles_keyboard_interrupt(monkeypatch):
 
     monkeypatch.setattr(cli_main, "create_parser", lambda: FakeParser())
 
-    with pytest.raises(SystemExit) as exc:
-        cli_main.main()
-
-    assert exc.value.code == 130
+    exit_code = cli_main.main()
+    assert exit_code == 130
 
 
 def test_main_handles_unexpected_exception(monkeypatch, capsys):
@@ -31,10 +27,8 @@ def test_main_handles_unexpected_exception(monkeypatch, capsys):
 
     monkeypatch.setattr(cli_main, "create_parser", lambda: FakeParser())
 
-    with pytest.raises(SystemExit) as exc:
-        cli_main.main()
-
-    assert exc.value.code == 1
+    exit_code = cli_main.main()
+    assert exit_code == 1
     captured = capsys.readouterr()
     assert "[ERROR] boom" in captured.err
 
@@ -50,7 +44,5 @@ def test_main_success_exit_code_zero(monkeypatch):
 
     monkeypatch.setattr(cli_main, "create_parser", lambda: FakeParser())
 
-    with pytest.raises(SystemExit) as exc:
-        cli_main.main()
-
-    assert exc.value.code == 0
+    exit_code = cli_main.main()
+    assert exit_code == 0
