@@ -30,6 +30,10 @@ dev = [
     "PyQt6>=6.6.0",
 ]
 
+[tool.black]
+line-length = 88
+target-version = ["py311", "py312", "py313"]
+
 [tool.ruff]
 line-length = 88
 
