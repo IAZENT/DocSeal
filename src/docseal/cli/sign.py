@@ -1,116 +1,119 @@
 """Document signing CLI command."""
 
-from __future__ import annotations
-
 import argparse
-import sys
-from getpass import getpass
 from pathlib import Path
 
-from cryptography.hazmat.primitives.serialization.pkcs12 import (
-    load_key_and_certificates,
-)
+from cryptography import x509
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric import rsa
 
-from docseal.crypto.signing import save_signature, sign_document
+from docseal.cli.colors import error, info, success
+from docseal.core import DocSealService
 
 
 def register_sign_command(
-    subparsers: argparse._SubParsersAction[argparse.ArgumentParser],
+    subparsers: argparse._SubParsersAction,  # type: ignore
 ) -> None:
     """Register the sign command."""
     sign_parser = subparsers.add_parser(
         "sign",
         help="Sign a document",
-        description="Create a detached cryptographic signature for a document",
+        description="Sign a document and create a .dseal envelope",
     )
 
     sign_parser.add_argument(
-        "--doc",
+        "--document",
+        "-d",
         required=True,
         help="Path to document to sign",
     )
     sign_parser.add_argument(
         "--cert",
+        "-c",
         required=True,
-        help="Path to PKCS#12 certificate bundle (.p12)",
+        help="Path to signer's X.509 certificate (PEM format)",
     )
     sign_parser.add_argument(
-        "--out",
+        "--key",
+        "-k",
         required=True,
-        help="Output path for signature file (.sig)",
+        help="Path to signer's private key (PEM format)",
     )
     sign_parser.add_argument(
-        "--password",
-        help="Certificate password (will prompt if not provided)",
+        "--output",
+        "-o",
+        help="Output path for .dseal file (default: <document>.dseal)",
+    )
+    sign_parser.add_argument(
+        "--description",
+        help="Optional description of the signature",
     )
 
     sign_parser.set_defaults(func=cmd_sign)
 
 
-def cmd_sign(args: argparse.Namespace) -> None:
+def cmd_sign(args: argparse.Namespace) -> int:
     """Sign a document with a certificate."""
-    # Validate input file
-    doc_path = Path(args.doc)
-    if not doc_path.exists():
-        print(f"[!] Document not found: {doc_path}", file=sys.stderr)
-        sys.exit(1)
-
-    if not doc_path.is_file():
-        print(f"[!] Not a file: {doc_path}", file=sys.stderr)
-        sys.exit(1)
-
-    # Validate certificate file
-    cert_path = Path(args.cert)
-    if not cert_path.exists():
-        print(f"[!] Certificate not found: {cert_path}", file=sys.stderr)
-        sys.exit(1)
-
-    # Get password
-    password = args.password
-    if not password:
-        password = getpass("Enter certificate password: ")
-
     try:
-        # Load PKCS#12 certificate
-        pkcs12_data = cert_path.read_bytes()
-        private_key, certificate, _additional_certs = load_key_and_certificates(
-            pkcs12_data, password.encode("utf-8")
-        )
+        # Validate input file
+        doc_path = Path(args.document)
+        if not doc_path.exists():
+            error(f"Document not found: {doc_path}")
+            return 1
 
-        if not private_key:
-            print("[!] No private key found in certificate", file=sys.stderr)
-            sys.exit(1)
+        if not doc_path.is_file():
+            error(f"Not a file: {doc_path}")
+            return 1
 
-        if not certificate:
-            print("[!] No certificate found in bundle", file=sys.stderr)
-            sys.exit(1)
+        # Validate key file
+        key_path = Path(args.key)
+        if not key_path.exists():
+            error(f"Private key not found: {key_path}")
+            return 1
 
-        # Type check: ensure we have RSA key
-        from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateKey
+        # Validate cert file
+        cert_path = Path(args.cert)
+        if not cert_path.exists():
+            error(f"Certificate not found: {cert_path}")
+            return 1
 
-        if not isinstance(private_key, RSAPrivateKey):
-            print("[!] Only RSA keys are supported", file=sys.stderr)
-            sys.exit(1)
+        # Determine output path
+        if args.output:
+            output_path = Path(args.output)
+        else:
+            output_path = doc_path.parent / f"{doc_path.stem}.dseal"
+
+        # Load document
+        document_bytes = doc_path.read_bytes()
+        info(f"Loaded document: {len(document_bytes)} bytes")
+
+        # Load private key
+        key_pem = key_path.read_bytes()
+        private_key = serialization.load_pem_private_key(key_pem, password=None)
+        if not isinstance(private_key, rsa.RSAPrivateKey):
+            error("Private key must be RSA")
+            return 1
+
+        # Load certificate
+        cert_pem = cert_path.read_bytes()
+        certificate = x509.load_pem_x509_certificate(cert_pem)
+        info("Loaded signer certificate")
 
         # Sign document
-        print(f"Signing document: {doc_path}")
-        signature_data = sign_document(doc_path, private_key, certificate)
+        service = DocSealService()
+        envelope = service.sign(
+            document_bytes,
+            private_key,
+            certificate,
+            description=args.description or "",
+        )
 
-        # Save signature
-        output_path = Path(args.out)
-        save_signature(signature_data, output_path)
+        # Save
+        output_path.write_bytes(envelope.to_bytes())
+        success(f"Document signed and saved to: {output_path}")
 
-        # Display info
-        print("Document signed successfully")
-        print(f"  Document:    {doc_path}")
-        print(f"  Signature:   {output_path}")
-        print(f"  Document ID: {signature_data['document_id']}")
-        print(f"  Timestamp:   {signature_data['timestamp']}")
-        print(f"  Signer:      {certificate.subject.rfc4514_string()}")
+        return 0
 
-    except ValueError as e:
-        print(f"[!] Invalid certificate or password: {e}", file=sys.stderr)
-        sys.exit(1)
     except Exception as e:
-        print(f"[!] Signing failed: {e}", file=sys.stderr)
-        sys.exit(1)
+        error(f"Signing failed: {e}")
+        return 1

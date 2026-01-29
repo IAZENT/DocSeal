@@ -1,326 +1,406 @@
-# DocSeal
+# DocSeal — Secure Academic Document Signing & Verification
 
-DocSeal is a secure academic document signing and verification system built with Python. It provides a complete PKI infrastructure including Certificate Authority (CA) management, certificate issuance, revocation handling, and cryptographic document signing with full chain validation.
+[![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Python](https://img.shields.io/badge/Python-3.11+-blue.svg)](https://www.python.org/)
+[![Status](https://img.shields.io/badge/Status-Stable-brightgreen.svg)](#)
 
-**Key capabilities**: Certificate issuance, document signing, signature verification, revocation management, and audit logging.
+Comprehensive cryptographic solution for secure signing, encryption, and verification of academic documents. Production-ready GUI (PyQt6) and CLI with full-featured CA system. See [pyproject.toml](pyproject.toml) for current version.
+
+**Quick Links**: [Installation](#installation) | [GUI Guide](#gui-guide) | [CLI Commands](#cli-reference) | [Python API](#python-api) | [Security](#security) | [Architecture](#architecture)
+
+---
 
 ## Features
 
-- **Certificate Authority**: Create and manage a self-signed root CA and issue end-entity certificates
-- **Document Signing**: Create detached cryptographic signatures with embedded certificates
-- **Signature Verification**: Validate signatures with full certificate chain verification
-- **Revocation Management**: Mark certificates as revoked and maintain a revocation list
-- **Audit Logging**: Forensic-ready logging of all verification attempts
-- **CLI Interface**: Unix-like command-line interface for all operations
-- **Test Coverage**: Comprehensive pytest-based test suite
+**Core**: RSA-PSS-SHA256 signing | AES-256-GCM encryption | Two-layer operations (sign+encrypt/decrypt+verify) | Tamper detection | Full CA system with revocation | Audit logging | X.509 certificates
 
-## Requirements
+**Interfaces**: 
+- **GUI** (PyQt6): 6 operation tabs (Sign, Verify, Encrypt, Decrypt, Sign+Encrypt, Decrypt+Verify), CA management with dark/light themes
+- **CLI**: 10+ commands with argparse, batch automation support
+- **Python API**: DocSealService for programmatic use
 
-- Python 3.11+
-- cryptography >= 42.0
-- pytest (for development)
+**Format**: `.dseal` (ZIP-based with JSON metadata, plaintext/ciphertext payload, signatures, certificates)
+
+**Security**: RSA-2048, AES-256-GCM, PBKDF2 key derivation, certificate validation, CRL checking, audit trails
+
+---
+
+## Installation
+
+**Requirements**: Python 3.11+ | OpenSSL dev headers | Linux/macOS/Windows
+
+```bash
+# Clone & setup
+git clone <repo-url> && cd docseal
+python3 -m venv .venv && source .venv/bin/activate  # or .venv\Scripts\activate on Windows
+pip install -r requirements.txt
+
+# Optional: dev dependencies
+pip install -r requirements-dev.txt
+
+# Install package
+pip install -e .
+
+# Verify
+docseal --help && docseal-gui
+```
+
+---
 
 ## Quick Start
 
-### Option 1: Using Docker (Easiest)
-
+### GUI (Recommended)
 ```bash
-# Pull the image from GitHub Container Registry
-docker pull ghcr.io/yourusername/docseal:latest
+docseal-gui
+```
+Navigate: **CA Tab** → Init CA → Issue Certificate → Use Sign/Verify/Encrypt/Decrypt tabs. All intuitive with real-time feedback, dark/light theme support.
 
-# Run DocSeal
-docker run --rm ghcr.io/yourusername/docseal:latest --help
-
-# Or use docker-compose
-git clone https://github.com/yourusername/docseal.git
-cd docseal
-docker-compose up -d docseal
-docker-compose exec docseal ca init --password mypassword123
+### CLI
+```bash
+docseal ca init                                              # Initialize CA (prompts for password)
+docseal ca issue --name "Alice" --role "Registrar"          # Issue certificate
+docseal sign --input doc.pdf --cert alice.p12 --output doc.dseal    # Sign
+docseal verify --envelope doc.dseal --verbose               # Verify
+docseal encrypt --input secret.pdf --cert recipient.pem --output secret.dseal
+docseal decrypt --envelope secret.dseal --key recipient_key.pem
+docseal ca list                                              # Show revoked certs
+docseal ca revoke --serial <num> --reason "compromised"     # Revoke cert
 ```
 
-See [DOCKER.md](./DOCKER.md) for detailed Docker usage.
+### Python API
+```python
+from docseal.core.service import DocSealService
+from docseal.core.envelope import DsealEnvelope
+from cryptography import x509
+from cryptography.hazmat.primitives import serialization
 
-### Option 2: Python Installation
+service = DocSealService()
 
-### 1. Clone the Repository
+# Load keys/certs
+with open('key.pem', 'rb') as f:
+    key = serialization.load_pem_private_key(f.read(), password=None)
+with open('cert.pem', 'rb') as f:
+    cert = x509.load_pem_x509_certificate(f.read())
 
-```bash
-git clone https://github.com/yourusername/docseal.git
-cd docseal
+# Sign
+envelope = service.sign(b"document content", key, cert, description="Transcript")
+with open('out.dseal', 'wb') as f:
+    f.write(envelope.to_bytes())
+
+# Verify
+loaded = DsealEnvelope.from_bytes(open('out.dseal', 'rb').read())
+result = service.verify(loaded, [cert])
+print(f"Valid: {result.is_valid}, Signer: {result.signer_name}")
+
+# Encrypt
+encrypted = service.encrypt(b"confidential", recipient_cert, "Enrollment")
+
+# Decrypt+Verify (two-layer)
+signed_encrypted = service.sign_encrypt(b"doc", key, cert, recipient_cert)
+decrypted, verify_result = service.decrypt_and_verify(signed_encrypted, recipient_key, [cert])
 ```
 
-### 2. Set Up Environment
+---
 
-#### Option A: Using Virtual Environment (Recommended)
+## GUI Guide
+
+| Tab | Purpose | Steps |
+|-----|---------|-------|
+| **Sign** | Create signatures | Select doc → Choose cert (.p12) → Enter password → Click Sign → Save .dseal |
+| **Verify** | Check authenticity | Select .dseal → Optionally add signer cert → Click Verify → View results (signer, timestamp, validity) |
+| **Encrypt** | Secure sharing | Select doc → Choose recipient cert → Click Encrypt → Save .dseal |
+| **Decrypt** | Unlock encrypted docs | Select .dseal → Choose your private cert → Enter password → Click Decrypt → Save plaintext |
+| **Sign+Encrypt** | Confidential + authenticated | Doc → Your cert (sign) → Recipient cert (encrypt) → Click Sign & Encrypt |
+| **Decrypt+Verify** | One-step auth + decrypt | .dseal → Your private cert → Signer cert → Click Decrypt & Verify → View results + plaintext |
+
+**CA Sub-tabs**: 
+- **Init CA**: Set CA password (8+ chars) → Creates keypair/self-signed cert
+- **Issue Cert**: Name → Role → Validity days → Password → Generates .p12
+- **Revoke**: Select from dropdown → View details → Reason → Confirm
+- **List**: View all revoked certificates (serial, date, reason)
+- **CA Info**: Display CA certificate details and counts
+
+**Themes**: Menu → Toggle Light/Dark (default: Light)
+
+---
+
+## CLI Reference
 
 ```bash
-# Create virtual environment
-python3 -m venv .venv
+# Certificate Authority
+docseal ca init                                    # Initialize new CA
+docseal ca issue --name NAME --role ROLE --valid-days DAYS    # Issue cert
+docseal ca revoke --serial SERIAL --reason REASON # Revoke cert
+docseal ca list                                    # List revoked certs
+docseal ca info                                    # CA information
 
-# Activate virtual environment
-source .venv/bin/activate  # Linux/macOS
-# or
-.venv\Scripts\activate  # Windows
+# Document Operations  
+docseal sign --input FILE --cert CERT.p12 [--output FILE.dseal]        # Sign
+docseal verify --envelope FILE.dseal [--cert CERT.pem] [--verbose]     # Verify
+docseal encrypt --input FILE --cert RECIPIENT.pem [--output FILE.dseal] # Encrypt
+docseal decrypt --envelope FILE.dseal --key KEY.pem [--output FILE]    # Decrypt
+docseal sign-encrypt --input FILE --signer-cert SIGNER.p12 --recipient-cert RECIPIENT.pem
+docseal decrypt-verify --envelope FILE.dseal --key KEY.pem --signer-cert SIGNER.pem
 
-# Install dependencies
-pip install -r requirements.txt
+# Options
+--verbose                   # Detailed output
+--no-revocation-check       # Skip CRL check (verify only)
+--help, --version           # Show help/version
+```
 
-# Install development dependencies (optional)
+---
+
+## Python API
+
+**Service Methods**:
+- `sign(document: bytes, key, cert, description: str) → DsealEnvelope`
+- `verify(envelope: DsealEnvelope, trusted_certs: list) → VerificationResult`
+- `encrypt(document: bytes, recipient_cert, description: str) → DsealEnvelope`
+- `decrypt(envelope: DsealEnvelope, key) → bytes`
+- `sign_encrypt(document, signer_key, signer_cert, recipient_cert, desc) → DsealEnvelope`
+- `decrypt_and_verify(envelope, recipient_key, trusted_certs) → (bytes, VerificationResult)`
+
+**Envelope**: Serialize with `envelope.to_bytes()` | Deserialize with `DsealEnvelope.from_bytes(data)`
+
+**Full Example**:
+```python
+from docseal.core.service import DocSealService
+from docseal.core.envelope import DsealEnvelope
+from cryptography import x509
+from cryptography.hazmat.primitives import serialization
+
+service = DocSealService()
+
+# Two-layer secure transfer
+signer_key = serialization.load_pem_private_key(open('signer_key.pem', 'rb').read(), None)
+signer_cert = x509.load_pem_x509_certificate(open('signer_cert.pem', 'rb').read())
+recipient_cert = x509.load_pem_x509_certificate(open('recipient_cert.pem', 'rb').read())
+
+envelope = service.sign_encrypt(open('sensitive.pdf', 'rb').read(), signer_key, signer_cert, recipient_cert)
+with open('secure.dseal', 'wb') as f:
+    f.write(envelope.to_bytes())
+
+# Recipient side
+recipient_key = serialization.load_pem_private_key(open('recipient_key.pem', 'rb').read(), None)
+loaded = DsealEnvelope.from_bytes(open('secure.dseal', 'rb').read())
+document, result = service.decrypt_and_verify(loaded, recipient_key, [signer_cert])
+
+if result.is_valid:
+    print(f"✓ Verified from {result.signer_name} at {result.signature_timestamp}")
+    with open('decrypted.pdf', 'wb') as f:
+        f.write(document)
+```
+
+---
+
+## File Format (.dseal)
+
+ZIP archive structure:
+```
+metadata.json          # {"version": "1.0", "payload_encrypted": false/true, "signer_name": "...", 
+                       #  "signature_timestamp": "...", "algorithms": {...}, ...}
+payload.bin            # Original document or AES-256-GCM ciphertext
+signature.bin          # RSA-PSS-SHA256 signature (optional)
+signer_cert.pem        # Signer's X.509 certificate (if signed)
+recipient_cert.pem     # Recipient's certificate (if encrypted)
+encrypted_key.bin      # RSA-OAEP wrapped AES key (if encrypted)
+```
+
+---
+
+## Certificate Authority System
+
+**Overview**: Full X.509 CA for issuing/revoking certificates with forensic audit logging.
+
+**How It Works**: 
+1. Init CA → RSA-2048 keypair + self-signed cert stored in `~/.docseal/ca/`
+2. Issue certs → CA signs certificates with subject/issuer in separate X.509 extensions
+3. Maintain CRL → Track revoked certs in `crl.json`
+4. Verify against CRL → All signature verifications check revocation status
+
+**Files** (in `~/.docseal/ca/`):
+- `ca.pem` - CA certificate (PEM)
+- `ca_key.pem` - CA private key (encrypted)
+- `crl.json` - Certificate revocation list
+- `audit.log` - Forensic audit trail
+
+**Revocation Workflow**:
+```bash
+docseal ca revoke --serial 123456789 --reason "key-compromise"
+# Updates crl.json with {serial, date_revoked, reason}
+# Future verifications with that cert will fail
+```
+
+---
+
+## Architecture
+
+**Layer Model**:
+```
+┌─────────────────────────────────────┐
+│  GUI (PyQt6)    │    CLI (argparse) │
+│  6 op tabs      │    10+ commands   │
+│  CA mgmt        │    Batch support  │
+│  Dark/light     │                   │
+└────────┬────────────────┬───────────┘
+         │                │
+    ┌────▼────────────────▼────┐
+    │   Service Layer           │
+    │  (DocSealService)         │
+    │  sign, verify, encrypt,   │
+    │  decrypt, sign_encrypt,   │
+    │  decrypt_verify, CRL check│
+    └────┬─────────────────────┘
+         │
+    ┌────▼──────────────────────┐
+    │ Core Cryptographic Ops    │
+    │ signing.py (RSA-PSS)      │
+    │ verification.py (sig+CRL) │
+    │ encryption.py (AES-GCM)   │
+    │ decryption.py (AES-GCM)   │
+    │ envelope.py (ZIP format)  │
+    └────┬─────────────────────┘
+         │
+    ┌────▼──────────────────────┐
+    │  cryptography lib (v42+)  │
+    │  RSA, AES, X.509, PBKDF2  │
+    └──────────────────────────┘
+```
+
+**Module Map** (src/docseal/):
+```
+core/              # Cryptographic operations
+├── service.py        (DocSealService API)
+├── envelope.py       (.dseal ZIP format)
+├── signing.py        (RSA-PSS creation)
+├── verification.py   (RSA verification + CRL)
+├── encryption.py     (AES-256-GCM + RSA wrap)
+└── decryption.py     (AES-256-GCM operations)
+
+ca/                # Certificate Authority
+├── authority.py      (CertificateAuthority)
+├── certificates.py   (X.509 generation/validation)
+├── revocation.py     (CRL management)
+└── exceptions.py     (CA errors)
+
+cli/               # Command-line interface
+├── main.py          (Entry point, command routing)
+├── sign.py, verify.py, encrypt.py, decrypt.py, ca.py
+└── colors.py        (Color output)
+
+gui/               # Graphical interface
+├── app.py           (Entry point)
+├── main_window.py   (Main window frame)
+├── tabs.py          (Operation tabs: Sign, Verify, Encrypt, Decrypt, etc.)
+├── ca_tabs.py       (CA tabs: Init, Issue, Revoke, List, Info)
+├── ca_manager.py    (CA GUI controller)
+├── service_wrapper.py (GUI service wrapper with file I/O)
+├── themes.py        (Light/dark themes)
+└── styles.py        (CSS styling)
+
+audit/             # Audit logging
+└── logger.py        (Forensic logging)
+
+utils/             # Utilities
+└── validation.py    (Input validation)
+```
+
+---
+
+## Testing
+
+```bash
+# Run tests
 pip install -r requirements-dev.txt
+pytest tests/ -v                                    # All tests
+pytest tests/test_integration_*.py -v              # Integration only
+pytest tests/test_cli_*.py -v                      # CLI only
+pytest tests/test_ca_*.py -v                       # CA only
+pytest tests/ --cov=src/docseal --cov-report=html # With coverage
+
+# Generate test certificates (RSA-2048, X.509)
+python scripts/generate_test_keys.py
+# Creates: registrar, lecturers, students, employer with keys/certs
+
+# Test scenarios: signing, encryption, tamper detection, multi-signer, 
+# revocation, certificate validation, CLI parsing, GUI interaction
 ```
 
-#### Option B: System-wide Installation
-
-```bash
-pip install -r requirements.txt
-```
-
-### 3. Run DocSeal CLI
-
-#### Option A: Direct Execution (Recommended)
-
-**Linux/macOS:**
-```bash
-# Make script executable
-chmod +x ./docseal
-
-# Run commands
-./docseal --help
-```
-
-**Windows:**
-```cmd
-# Run commands directly
-docseal.bat --help
-
-# Or simply (if .bat is in PATH)
-docseal --help
-
-# PowerShell users can use:
-.\docseal.ps1 --help
-```
-
-#### Option B: Install as Package
-
-```bash
-pip install -e .
-docseal --help
-```
-
-#### Option C: Using Python Module
-
-```bash
-PYTHONPATH=./src python -m docseal.cli.main --help
-```
-
-## Usage Examples
-
-**Note:** Use `./docseal` on Linux/macOS, or `docseal` (or `docseal.bat`) on Windows.
-
-### Initialize Certificate Authority
-
-```bash
-./docseal ca init          # Linux/macOS
-docseal ca init            # Windows
-# Enter a strong password when prompted
-```
-
-### Issue a Certificate
-
-```bash
-./docseal ca issue --name "Alice Registrar" --role "Registrar"
-# Enter CA password, then certificate password
-```
-
-### Sign a Document
-
-```bash
-./docseal sign --doc transcript.pdf --cert alice_registrar.p12 --out transcript.sig
-# Enter certificate password
-```
-
-### Verify a Signature
-
-```bash
-./docseal verify --doc transcript.pdf --sig transcript.sig --verbose
-```
-
-### Revoke a Certificate
-
-```bash
-./docseal ca revoke --serial 123456789 --reason "key-compromise"
-```
-
-### View CA Information
-
-```bash
-./docseal ca info
-```
-
-### List Revoked Certificates
-
-```bash
-./docseal ca list
-```
-
-## Complete Workflow Example
-
-```bash
-# Linux/macOS: use ./docseal
-# Windows: use docseal or docseal.bat
-
-# 1. Initialize CA
-./docseal ca init
-
-# 2. Issue certificate for registrar
-./docseal ca issue --name "Alice Registrar" --role "Registrar"
-
-# 3. Create a test document
-echo "Student: John Doe\nGrade: A\nDate: 2026-01-08" > transcript.txt
-
-# 4. Sign the document
-./docseal sign --doc transcript.txt --cert alice_registrar.p12 --out transcript.sig
-
-# 5. Verify the signature
-./docseal verify --doc transcript.txt --sig transcript.sig --verbose
-
-# 6. View CA details
-./docseal ca info
-
-# 7. (Optional) Revoke certificate if needed
-./docseal ca revoke --serial <serial_number> --reason "terminated"
-```
-
-## Development
-
-### Running Tests
-
-```bash
-# Run all tests
-PYTHONPATH=./src pytest -v
-
-# Run specific test file
-PYTHONPATH=./src pytest tests/test_cli.py -v
-
-# Run with coverage
-PYTHONPATH=./src pytest --cov=docseal --cov-report=term-missing
-```
-
-### Code Quality Checks
-
-```bash
-# Format code with black
-black .
-
-# Check formatting
-black --check .
-
-# Lint with ruff
-ruff check src/ tests/
-
-# Type checking with mypy
-mypy src/
-
-# Security audit
-pip-audit
-bandit -r src/
-```
-
-### Project Structure
-
-```
-DocSeal/
-├── src/docseal/
-│   ├── audit/           # Audit logging
-│   ├── ca/              # Certificate Authority
-│   ├── cli/             # Command-line interface
-│   ├── crypto/          # Signing and verification
-│   └── utils/           # Validation utilities
-├── tests/               # Test suite
-├── docseal              # CLI wrapper (Linux/macOS)
-├── docseal.bat          # CLI wrapper (Windows cmd)
-├── docseal.ps1          # CLI wrapper (Windows PowerShell)
-├── pyproject.toml       # Project configuration
-├── requirements.txt     # Runtime dependencies
-└── requirements-dev.txt # Development dependencies
-```
+---
 
 ## File Locations
 
-DocSeal stores CA artifacts in your home directory:
+**CA Storage** (`~/.docseal/ca/`): `ca.pem`, `ca_key.pem`, `crl.json`, `audit.log`
 
-- **CA Directory**: `~/.docseal/ca/`
-- **CA Certificate (PKCS#12)**: `~/.docseal/ca/ca.p12`
-- **CA Certificate (PEM)**: `~/.docseal/ca/ca.pem`
-- **Revocation List**: `~/.docseal/ca/crl.json`
-- **Audit Log**: `~/.docseal/ca/audit.log`
+**Working Files**: Documents/certificates anywhere; `.dseal` output to input dir or `--output` location
 
-## CLI Commands Reference
+**Config**: Linux/macOS: `~/.docseal/` | Windows: `%USERPROFILE%\.docseal\`
 
-### Certificate Authority Commands
+---
 
-| Command | Description |
-|---------|-------------|
-| `docseal ca init` | Initialize a new Certificate Authority |
-| `docseal ca issue` | Issue a new certificate |
-| `docseal ca revoke` | Revoke a certificate |
-| `docseal ca list` | List all revoked certificates |
-| `docseal ca info` | Display CA information |
+## Security
 
-### Document Commands
+**Algorithms**:
+| Operation | Algorithm | Standard |
+|-----------|-----------|----------|
+| Signing | RSA-PSS-SHA256 | PKCS#1 v2.1 |
+| Encryption | AES-256-GCM | NIST |
+| Key Wrapping | RSA-OAEP | PKCS#1 v2.1 |
+| Key Derivation | PBKDF2-SHA256 | PKCS#5 |
+| Asym Keys | RSA-2048 | NIST |
 
-| Command | Description |
-|---------|-------------|
-| `docseal sign` | Sign a document |
-| `docseal verify` | Verify a document signature |
+**Threat Model**:
+- ✓ **Signature tampering**: Detected (RSA-PSS verification fails)
+- ✓ **Encrypted payload tampering**: Detected (GCM auth fails)
+- ✓ **Wrong key decryption**: Fails (GCM auth fails)
+- ✓ **Revoked cert use**: Detected (CRL check)
+- ✓ **Timestamp authenticity**: TSA integration for certified timestamps (v2.0)
+- ✓ **Multi-recipient**: Full multi-recipient encryption support (v2.0)
+- ✓ **HSM support**: Hardware Security Module integration (v2.0)
 
-### Common Options
+**Best Practices**: Strong passwords (8+ chars, mixed case/numbers/symbols) | Protect private keys | Verify external documents | Always enable CRL checks | Review audit logs | Backup CA | Renew certs before expiry | Keep software updated
 
-- `--help`: Show help message
-- `--version`: Show version information
-- `--verbose`: Show detailed output (verify command)
-- `--no-revocation-check`: Skip revocation checking (verify command)
-- `--no-audit`: Skip audit logging (verify command)
+**Assumptions**: Trusted environment for key storage | Secure cert distribution | No external timestamp authority (v0.9) | No HSM (v0.9)
 
-## Security Considerations
-
-- **Password Security**: Use strong passwords for CA and certificates (minimum 8 characters)
-- **Key Storage**: Private keys are stored encrypted in PKCS#12 format
-- **Audit Trail**: All verification attempts are logged to `audit.log`
-- **Revocation**: Always check certificate revocation status during verification
-- **File Permissions**: Ensure CA files have appropriate permissions (600 recommended)
+---
 
 ## Troubleshooting
 
-### "CA not initialized"
-**Solution**: Run `./docseal ca init` first
+| Issue | Solution |
+|-------|----------|
+| CA not initialized | `docseal ca init` or GUI CA → Init CA |
+| Document/file not found | Check path exists, use absolute paths, verify filename |
+| Invalid certificate/password | Re-enter password (case-sensitive), re-issue if forgotten |
+| Certificate revoked | `docseal ca list` to check, use different cert |
+| SIGNATURE INVALID | Document modified after signing, wrong cert, expired cert, corrupted file |
+| Permission denied | Check `~/.docseal/ca/` permissions with `ls -la`, fix if needed |
+| Out of memory | Close other apps, increase RAM, split large documents |
+| GUI won't start | `pip install -e '.[gui]'`, check X11/Wayland (Linux) |
+| CLI commands not found | `pip install -e .` again, or use `python -m docseal.cli.main` |
 
-### "Document not found"
-**Solution**: Check that the file path is correct
+---
 
-### "Invalid certificate or password"
-**Solution**: Verify the password is correct
+## Development
 
-### "Certificate revoked"
-**Solution**: Certificate has been revoked, check with `./docseal ca list`
+**Code Quality**:
+```bash
+mypy src/docseal --strict          # Type checking
+ruff check src/                     # Linting
+bandit -r src/docseal/             # Security audit
+pytest tests/ --cov=src/docseal    # Coverage
+```
 
-### "SIGNATURE INVALID"
-**Solution**: Document may have been modified, certificate expired, or signature corrupted
+**Contributing**: Fork → Feature branch → Add tests → Pass CI → PR
 
-## Contributing
+**Known v2.0 Limits**: Local-only CRL (no OCSP) | No WebUI yet
 
-Contributions are welcome. Suggested workflow:
+**v3.0 Roadmap**: OCSP integration | WebUI dashboard | Batch operations API | Blockchain notarization
 
-1. Fork the repo.
-2. Create a feature branch.
-3. Add tests for your change.
-4. Open a pull request with a clear description.
+---
 
 ## License
 
-See the project `LICENSE` file.
+MIT - See [LICENSE](LICENSE)
 
-## Contact
-
-Open an issue in this repository for questions or feature requests.
+**Support**: Open GitHub issues | Check existing issues | Review docs above
 
