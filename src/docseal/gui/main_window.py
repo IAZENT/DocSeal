@@ -1,21 +1,34 @@
 """Main application window for DocSeal GUI."""
 
-from typing import Optional
-import sys
 from pathlib import Path
-from PyQt6.QtWidgets import (
-    QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QLabel,
-    QPushButton, QStackedWidget, QStyle, QComboBox
-)
+
 from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QIcon, QFont
+from PyQt6.QtGui import QFont
+from PyQt6.QtWidgets import (
+    QComboBox,
+    QHBoxLayout,
+    QLabel,
+    QMainWindow,
+    QPushButton,
+    QStackedWidget,
+    QStyle,
+    QVBoxLayout,
+    QWidget,
+)
 
 from .auth import AuthenticationManager
 from .ca_manager import CertificateAuthority
-from .login_screen import LoginScreen
-from .dashboard import DashboardTab
-from .tabs import SignTab, VerifyTab, EncryptTab, DecryptTab, SignEncryptTab, DecryptVerifyTab
 from .ca_tabs import InitializeCATab, IssueCATab, RevokeCATab
+from .dashboard import DashboardTab
+from .login_screen import LoginScreen
+from .tabs import (
+    DecryptTab,
+    DecryptVerifyTab,
+    EncryptTab,
+    SignEncryptTab,
+    SignTab,
+    VerifyTab,
+)
 from .themes import get_stylesheet, get_theme
 
 
@@ -26,13 +39,15 @@ class MainWindow(QMainWindow):
         """Initialize the main window."""
         super().__init__()
         self.setWindowTitle("DocSeal - Secure Document Management System")
-        self.setWindowIcon(self.style().standardIcon(QStyle.StandardPixmap.SP_DialogYesButton))
+        self.setWindowIcon(
+            self.style().standardIcon(QStyle.StandardPixmap.SP_DialogYesButton)
+        )
         self.setGeometry(100, 100, 1200, 800)
 
         # Initialize authentication
         self.auth_manager = AuthenticationManager()
         self.ca_manager = CertificateAuthority(Path("data/ca"))
-        
+
         # Store current theme
         self.current_theme = "light"
         self._theme = get_theme(self.current_theme)
@@ -116,16 +131,16 @@ class MainWindow(QMainWindow):
         self.issue_ca_tab = IssueCATab(self.ca_manager)
         self.revoke_ca_tab = RevokeCATab(self.ca_manager)
 
-        self.stacked_widget.addWidget(self.dashboard_tab)        # 0
-        self.stacked_widget.addWidget(self.sign_tab)             # 1
-        self.stacked_widget.addWidget(self.verify_tab)           # 2
-        self.stacked_widget.addWidget(self.encrypt_tab)          # 3
-        self.stacked_widget.addWidget(self.decrypt_tab)          # 4
-        self.stacked_widget.addWidget(self.sign_encrypt_tab)     # 5
-        self.stacked_widget.addWidget(self.decrypt_verify_tab)   # 6
-        self.stacked_widget.addWidget(self.init_ca_tab)          # 7
-        self.stacked_widget.addWidget(self.issue_ca_tab)         # 8
-        self.stacked_widget.addWidget(self.revoke_ca_tab)        # 9
+        self.stacked_widget.addWidget(self.dashboard_tab)  # 0
+        self.stacked_widget.addWidget(self.sign_tab)  # 1
+        self.stacked_widget.addWidget(self.verify_tab)  # 2
+        self.stacked_widget.addWidget(self.encrypt_tab)  # 3
+        self.stacked_widget.addWidget(self.decrypt_tab)  # 4
+        self.stacked_widget.addWidget(self.sign_encrypt_tab)  # 5
+        self.stacked_widget.addWidget(self.decrypt_verify_tab)  # 6
+        self.stacked_widget.addWidget(self.init_ca_tab)  # 7
+        self.stacked_widget.addWidget(self.issue_ca_tab)  # 8
+        self.stacked_widget.addWidget(self.revoke_ca_tab)  # 9
 
         # Show dashboard by default
         self.stacked_widget.setCurrentIndex(0)
@@ -150,7 +165,8 @@ class MainWindow(QMainWindow):
         title.setFont(title_font)
         title.setAlignment(Qt.AlignmentFlag.AlignCenter)
         title.setStyleSheet(
-            f"padding: 20px; background-color: {self._theme.sidebar_bg}; color: {self._theme.sidebar_text};"
+            f"padding: 20px; background-color: {self._theme.sidebar_bg}; "
+            f"color: {self._theme.sidebar_text};"
         )
         self.sidebar_title = title
         layout.addWidget(title)
@@ -169,7 +185,7 @@ class MainWindow(QMainWindow):
         theme_label = QLabel("Theme:")
         theme_label.setStyleSheet("padding: 10px 10px 5px 10px; font-weight: bold;")
         layout.addWidget(theme_label)
-        
+
         theme_combo = QComboBox()
         theme_combo.addItems(["Light", "Dark"])
         theme_combo.currentIndexChanged.connect(self._on_theme_changed)
@@ -259,6 +275,7 @@ class MainWindow(QMainWindow):
 
         # Add footer with version
         from docseal import __version__
+
         footer = QLabel(f"v{__version__}")
         footer.setAlignment(Qt.AlignmentFlag.AlignCenter)
         footer.setStyleSheet(
@@ -320,7 +337,8 @@ class MainWindow(QMainWindow):
             )
         if hasattr(self, "sidebar_title"):
             self.sidebar_title.setStyleSheet(
-                f"padding: 20px; background-color: {self._theme.sidebar_bg}; color: {self._theme.sidebar_text};"
+                f"padding: 20px; background-color: {self._theme.sidebar_bg}; "
+                f"color: {self._theme.sidebar_text};"
             )
         if hasattr(self, "logout_btn"):
             self.logout_btn.setStyleSheet(

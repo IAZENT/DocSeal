@@ -9,19 +9,19 @@ class Theme:
     primary_text: str
     secondary_bg: str
     secondary_text: str
-    
+
     # UI element colors
     button_bg: str
     button_text: str
     button_hover: str
     button_pressed: str
-    
+
     # Input field colors
     input_bg: str
     input_text: str
     input_border: str
     input_focus_border: str
-    
+
     # Status colors
     success_bg: str
     success_text: str
@@ -29,15 +29,15 @@ class Theme:
     error_text: str
     warning_bg: str
     warning_text: str
-    
+
     # Other elements
     sidebar_bg: str
     sidebar_text: str
     label_text: str
     border_color: str
-    
+
     @staticmethod
-    def get_stylesheet(theme: 'Theme') -> str:
+    def get_stylesheet(theme: "Theme") -> str:
         """Generate complete stylesheet for theme."""
         return f"""
         QMainWindow {{
@@ -257,19 +257,19 @@ class LightTheme(Theme):
     primary_text = "#2c3e50"
     secondary_bg = "#ecf0f1"
     secondary_text = "#7f8c8d"
-    
+
     # UI element colors
     button_bg = "#3498db"
     button_text = "#ffffff"
     button_hover = "#2980b9"
     button_pressed = "#1f618d"
-    
+
     # Input field colors
     input_bg = "#ffffff"
     input_text = "#2c3e50"
     input_border = "#bdc3c7"
     input_focus_border = "#3498db"
-    
+
     # Status colors
     success_bg = "#2ecc71"
     success_text = "#ffffff"
@@ -277,7 +277,7 @@ class LightTheme(Theme):
     error_text = "#ffffff"
     warning_bg = "#f39c12"
     warning_text = "#ffffff"
-    
+
     # Other elements
     sidebar_bg = "#2c3e50"
     sidebar_text = "#ecf0f1"
@@ -293,19 +293,19 @@ class DarkTheme(Theme):
     primary_text = "#e0e0e0"
     secondary_bg = "#2d2d2d"
     secondary_text = "#a0a0a0"
-    
+
     # UI element colors
     button_bg = "#0088cc"
     button_text = "#ffffff"
     button_hover = "#0066aa"
     button_pressed = "#004488"
-    
+
     # Input field colors
     input_bg = "#2d2d2d"
     input_text = "#e0e0e0"
     input_border = "#404040"
     input_focus_border = "#0088cc"
-    
+
     # Status colors
     success_bg = "#22aa44"
     success_text = "#ffffff"
@@ -313,7 +313,7 @@ class DarkTheme(Theme):
     error_text = "#ffffff"
     warning_bg = "#ff9933"
     warning_text = "#000000"
-    
+
     # Other elements
     sidebar_bg = "#0d0d0d"
     sidebar_text = "#e0e0e0"

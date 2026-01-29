@@ -1,11 +1,13 @@
 """Dashboard tab for DocSeal GUI."""
 
-from PyQt6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QGroupBox,
-    QTextEdit
-)
-from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QFont
+from PyQt6.QtWidgets import (
+    QGroupBox,
+    QLabel,
+    QTextEdit,
+    QVBoxLayout,
+    QWidget,
+)
 
 from .auth import AuthenticationManager
 from .ca_manager import CertificateAuthority
@@ -14,8 +16,9 @@ from .ca_manager import CertificateAuthority
 class DashboardTab(QWidget):
     """Dashboard tab showing system status and information."""
 
-    def __init__(self, auth_manager: AuthenticationManager,
-                 ca_manager: CertificateAuthority) -> None:
+    def __init__(
+        self, auth_manager: AuthenticationManager, ca_manager: CertificateAuthority
+    ) -> None:
         """
         Initialize the dashboard tab.
 
@@ -110,6 +113,7 @@ class DashboardTab(QWidget):
         system_layout = QVBoxLayout()
 
         from docseal import __version__
+
         system_info = f"""
         Version: {__version__}
         Framework: PyQt6

@@ -43,6 +43,7 @@ class Colors:
         """Return text in bold."""
         return f"{cls.BOLD}{text}{cls.RESET}"
 
+
 # Convenience functions for direct use
 def success(text: str) -> None:
     """Print text in green (success)."""

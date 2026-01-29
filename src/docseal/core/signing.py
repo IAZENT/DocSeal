@@ -62,8 +62,8 @@ def _extract_signer_name(cert: x509.Certificate) -> str:
     try:
         cn_attrs = cert.subject.get_attributes_for_oid(x509.oid.NameOID.COMMON_NAME)
         if cn_attrs:
-            return cn_attrs[0].value
-    except Exception:
+            return str(cn_attrs[0].value)
+    except Exception:  # noqa: S110
         pass
 
     return "Unknown Signer"

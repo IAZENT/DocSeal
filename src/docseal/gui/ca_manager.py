@@ -1,22 +1,26 @@
 """CA (Certificate Authority) management for DocSeal GUI."""
 
 from dataclasses import dataclass
-from pathlib import Path
 from datetime import datetime, timedelta
+from pathlib import Path
 from typing import Optional
+
 from cryptography import x509
-from cryptography.x509.oid import NameOID
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.primitives.serialization import (
-    Encoding, PrivateFormat, NoEncryption, PublicFormat, load_pem_private_key
+    Encoding,
+    NoEncryption,
+    PrivateFormat,
+    load_pem_private_key,
 )
-import uuid
+from cryptography.x509.oid import NameOID
 
 
 @dataclass
 class CAInfo:
     """Information about a Certificate Authority."""
+
     name: str
     organization: str
     country: str
@@ -77,18 +81,19 @@ class CertificateAuthority:
         try:
             # Generate CA private key
             ca_key = rsa.generate_private_key(
-                public_exponent=65537,
-                key_size=ca_info.key_size
+                public_exponent=65537, key_size=ca_info.key_size
             )
 
             # Create CA certificate
-            subject = issuer = x509.Name([
-                x509.NameAttribute(NameOID.COUNTRY_NAME, ca_info.country),
-                x509.NameAttribute(NameOID.STATE_OR_PROVINCE_NAME, ca_info.state),
-                x509.NameAttribute(NameOID.LOCALITY_NAME, ca_info.city),
-                x509.NameAttribute(NameOID.ORGANIZATION_NAME, ca_info.organization),
-                x509.NameAttribute(NameOID.COMMON_NAME, ca_info.name),
-            ])
+            subject = issuer = x509.Name(
+                [
+                    x509.NameAttribute(NameOID.COUNTRY_NAME, ca_info.country),
+                    x509.NameAttribute(NameOID.STATE_OR_PROVINCE_NAME, ca_info.state),
+                    x509.NameAttribute(NameOID.LOCALITY_NAME, ca_info.city),
+                    x509.NameAttribute(NameOID.ORGANIZATION_NAME, ca_info.organization),
+                    x509.NameAttribute(NameOID.COMMON_NAME, ca_info.name),
+                ]
+            )
 
             cert = (
                 x509.CertificateBuilder()
@@ -125,11 +130,13 @@ class CertificateAuthority:
 
             # Save CA key
             with open(self.ca_key_path, "wb") as f:
-                f.write(ca_key.private_bytes(
-                    encoding=Encoding.PEM,
-                    format=PrivateFormat.PKCS8,
-                    encryption_algorithm=NoEncryption()
-                ))
+                f.write(
+                    ca_key.private_bytes(
+                        encoding=Encoding.PEM,
+                        format=PrivateFormat.PKCS8,
+                        encryption_algorithm=NoEncryption(),
+                    )
+                )
 
             # Save CA certificate
             with open(self.ca_cert_path, "wb") as f:
@@ -143,8 +150,9 @@ class CertificateAuthority:
         except Exception as e:
             return False, f"Error initializing CA: {str(e)}"
 
-    def issue_certificate(self, common_name: str, organization: str,
-                         email: str, valid_days: int = 365) -> tuple[bool, str, Optional[Path]]:
+    def issue_certificate(
+        self, common_name: str, organization: str, email: str, valid_days: int = 365
+    ) -> tuple[bool, str, Optional[Path]]:
         """
         Issue a certificate signed by the CA.
 
@@ -163,24 +171,21 @@ class CertificateAuthority:
         try:
             # Load CA key and certificate
             with open(self.ca_key_path, "rb") as f:
-                ca_key = load_pem_private_key(
-                    f.read(), password=None
-                )
+                ca_key = load_pem_private_key(f.read(), password=None)
 
             with open(self.ca_cert_path, "rb") as f:
                 ca_cert = x509.load_pem_x509_certificate(f.read())
 
             # Generate subject key
-            subject_key = rsa.generate_private_key(
-                public_exponent=65537,
-                key_size=2048
-            )
+            subject_key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
 
             # Create certificate request
-            subject = x509.Name([
-                x509.NameAttribute(NameOID.ORGANIZATION_NAME, organization),
-                x509.NameAttribute(NameOID.COMMON_NAME, common_name),
-            ])
+            subject = x509.Name(
+                [
+                    x509.NameAttribute(NameOID.ORGANIZATION_NAME, organization),
+                    x509.NameAttribute(NameOID.COMMON_NAME, common_name),
+                ]
+            )
 
             # Issue certificate
             cert = (
@@ -226,11 +231,13 @@ class CertificateAuthority:
             key_filename = f"{common_name.replace(' ', '_')}_key.pem"
             key_path = self.ca_dir / key_filename
             with open(key_path, "wb") as f:
-                f.write(subject_key.private_bytes(
-                    encoding=Encoding.PEM,
-                    format=PrivateFormat.PKCS8,
-                    encryption_algorithm=NoEncryption()
-                ))
+                f.write(
+                    subject_key.private_bytes(
+                        encoding=Encoding.PEM,
+                        format=PrivateFormat.PKCS8,
+                        encryption_algorithm=NoEncryption(),
+                    )
+                )
 
             return True, f"Certificate issued for {common_name}", cert_path
 
@@ -288,8 +295,16 @@ class CertificateAuthority:
                 cert = x509.load_pem_x509_certificate(f.read())
 
             # Use UTC versions of datetime to avoid deprecation warnings
-            valid_from = cert.not_valid_before_utc if hasattr(cert, 'not_valid_before_utc') else cert.not_valid_before
-            valid_until = cert.not_valid_after_utc if hasattr(cert, 'not_valid_after_utc') else cert.not_valid_after
+            valid_from = (
+                cert.not_valid_before_utc
+                if hasattr(cert, "not_valid_before_utc")
+                else cert.not_valid_before
+            )
+            valid_until = (
+                cert.not_valid_after_utc
+                if hasattr(cert, "not_valid_after_utc")
+                else cert.not_valid_after
+            )
 
             info = f"""
             CA Information:
@@ -318,14 +333,22 @@ class CertificateAuthority:
         cert_path = self.ca_dir / f"{cert_name}_cert.pem"
         if not cert_path.exists():
             return f"Certificate not found: {cert_name}"
-        
+
         try:
             with open(cert_path, "rb") as f:
                 cert = x509.load_pem_x509_certificate(f.read())
-            
-            valid_from = cert.not_valid_before_utc if hasattr(cert, 'not_valid_before_utc') else cert.not_valid_before
-            valid_until = cert.not_valid_after_utc if hasattr(cert, 'not_valid_after_utc') else cert.not_valid_after
-            
+
+            valid_from = (
+                cert.not_valid_before_utc
+                if hasattr(cert, "not_valid_before_utc")
+                else cert.not_valid_before
+            )
+            valid_until = (
+                cert.not_valid_after_utc
+                if hasattr(cert, "not_valid_after_utc")
+                else cert.not_valid_after
+            )
+
             info = f"""
 Certificate: {cert_name}
 Subject: {cert.subject.rfc4514_string()}

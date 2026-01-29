@@ -1,13 +1,12 @@
 """Document verification CLI command."""
 
 import argparse
-import sys
 from pathlib import Path
 
 from cryptography import x509
 
-from docseal.core import DsealEnvelope, DocSealService
-from docseal.cli.colors import error, success, info, warning
+from docseal.cli.colors import error, info, success, warning
+from docseal.core import DocSealService, DsealEnvelope
 
 
 def register_verify_command(
@@ -105,5 +104,6 @@ def cmd_verify(args: argparse.Namespace) -> int:
         error(f"Verification failed: {e}")
         if args.verbose:
             import traceback
+
             traceback.print_exc()
         return 1

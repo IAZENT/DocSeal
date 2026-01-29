@@ -84,7 +84,8 @@ def test_users(test_users_config):
             user.ensure_loaded()
         except FileNotFoundError:
             pytest.skip(
-                "Test keys/certs not generated yet. Run: python scripts/generate_test_keys.py"
+                "Test keys/certs not generated yet. "
+                "Run: python scripts/generate_test_keys.py"
             )
         users[user_id] = user
 

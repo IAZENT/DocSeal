@@ -15,7 +15,7 @@ from .decryption import decrypt_envelope
 from .encryption import encrypt_document
 from .envelope import DsealEnvelope
 from .signing import sign_document
-from .verification import verify_envelope, VerificationResult
+from .verification import VerificationResult, verify_envelope
 
 
 @dataclass
@@ -107,7 +107,8 @@ class DocSealService:
 
         Args:
             envelope: Envelope to verify
-            trusted_certs: Optional list of trusted CA certificates for cert chain validation
+            trusted_certs: Optional list of trusted CA certificates for
+                cert chain validation
 
         Returns:
             VerificationResult with verification status
@@ -154,6 +155,8 @@ class DocSealService:
         # Step 2: Check if decrypted payload is itself a serialized envelope
         # (sign_encrypt scenario: encrypted the serialized signed envelope)
         try:
+            if decrypted.payload is None:
+                raise ValueError("Decrypted payload is empty")
             inner_envelope = DsealEnvelope.from_bytes(decrypted.payload)
             # This is a nested signed-encrypted envelope
             result = self.verify(inner_envelope, trusted_certs)

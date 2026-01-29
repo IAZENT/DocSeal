@@ -4,6 +4,7 @@ Contains CertificateAuthority which can initialize a self-signed
 root CA and export it as PKCS#12.
 """
 
+import warnings
 from datetime import datetime, timedelta, timezone
 from typing import Callable, Optional
 
@@ -22,13 +23,16 @@ try:
     )
 
     serialize_key_and_certificates = _serialize_impl
-except Exception:  # noqa: S110
-    pass
+except Exception as exc:  # pragma: no cover - fallback only for rare environments
+    warnings.warn(
+        f"PKCS#12 serialization unavailable: {exc}", RuntimeWarning, stacklevel=2
+    )
+    serialize_key_and_certificates = None
 
 # Certificate issuing helper
 try:
     from .certificates import CertificateIssuer
-except Exception:
+except Exception:  # pragma: no cover - import fallback
     # For direct module runs, try package import as fallback
     from docseal.ca.certificates import CertificateIssuer
 
@@ -37,7 +41,7 @@ except Exception:
 # sys.path and importing absolutely.
 try:
     from .exceptions import CAAlreadyInitialized, CAInitializationError
-except Exception:
+except Exception:  # pragma: no cover - legacy import fallback
     import os
     import sys
 

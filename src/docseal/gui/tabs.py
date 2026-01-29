@@ -1,17 +1,26 @@
 """GUI tabs for DocSeal operations."""
 
-from typing import Optional
 from pathlib import Path
-from PyQt6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QLineEdit,
-    QFileDialog, QTextEdit, QGroupBox, QMessageBox, QProgressBar, QCheckBox
-)
-from PyQt6.QtCore import Qt, QThread, pyqtSignal
-from PyQt6.QtGui import QFont
+from typing import Optional
 
-from .service_wrapper import GUIDocSealService
+from PyQt6.QtCore import QThread, pyqtSignal
+from PyQt6.QtGui import QFont
+from PyQt6.QtWidgets import (
+    QCheckBox,
+    QFileDialog,
+    QGroupBox,
+    QHBoxLayout,
+    QLabel,
+    QLineEdit,
+    QMessageBox,
+    QPushButton,
+    QTextEdit,
+    QVBoxLayout,
+    QWidget,
+)
+
 from .ca_manager import CertificateAuthority
-from ..core.envelope import DsealEnvelope
+from .service_wrapper import GUIDocSealService
 
 
 class WorkerThread(QThread):
@@ -116,7 +125,9 @@ class SignTab(QWidget):
         layout.addStretch()
         self.setLayout(layout)
 
-    def _create_file_selector(self, label: str, attr: str, save: bool = False) -> QGroupBox:
+    def _create_file_selector(
+        self, label: str, attr: str, save: bool = False
+    ) -> QGroupBox:
         """Create a file selector group."""
         group = QGroupBox(label)
         layout = QHBoxLayout()
@@ -149,7 +160,9 @@ class SignTab(QWidget):
                 self.key_path.setReadOnly(True)
                 self.cert_path.setReadOnly(True)
             else:
-                QMessageBox.warning(self, "CA not available", "Initialize the CA in the CA tab first.")
+                QMessageBox.warning(
+                    self, "CA not available", "Initialize the CA in the CA tab first."
+                )
                 self.use_ca_checkbox.setChecked(False)
         else:
             self.key_path.setReadOnly(False)
@@ -162,28 +175,45 @@ class SignTab(QWidget):
         path, _ = QFileDialog.getOpenFileName(self, "Select File")
         if path:
             field.setText(path)
-            if field is getattr(self, "envelope_path", None) and not self.output_path.text():
+            if (
+                field is getattr(self, "envelope_path", None)
+                and not self.output_path.text()
+            ):
                 default = Path(path).with_suffix(".decrypted")
                 self.output_path.setText(str(default))
-            if field is getattr(self, "document_path", None) and not self.output_path.text():
+            if (
+                field is getattr(self, "document_path", None)
+                and not self.output_path.text()
+            ):
                 default = Path(path).with_suffix(".signed_encrypted.dseal")
                 self.output_path.setText(str(default))
-            if field is getattr(self, "envelope_path", None) and not self.output_path.text():
+            if (
+                field is getattr(self, "envelope_path", None)
+                and not self.output_path.text()
+            ):
                 default = Path(path).with_suffix(".decrypted")
                 self.output_path.setText(str(default))
-            if field is getattr(self, "document_path", None) and not self.output_path.text():
+            if (
+                field is getattr(self, "document_path", None)
+                and not self.output_path.text()
+            ):
                 default = Path(path).with_suffix(".encrypted.dseal")
                 self.output_path.setText(str(default))
-            if field is getattr(self, "document_path", None) and not self.output_path.text():
+            if (
+                field is getattr(self, "document_path", None)
+                and not self.output_path.text()
+            ):
                 default = Path(path).with_suffix(".dseal")
                 self.output_path.setText(str(default))
 
     def _browse_save(self, field: QLineEdit):
         """Open file browser for saving files."""
-        path, _ = QFileDialog.getSaveFileName(self, "Save As", filter="DocSeal Envelopes (*.dseal)")
+        path, _ = QFileDialog.getSaveFileName(
+            self, "Save As", filter="DocSeal Envelopes (*.dseal)"
+        )
         if path:
-            if not path.endswith('.dseal'):
-                path += '.dseal'
+            if not path.endswith(".dseal"):
+                path += ".dseal"
             field.setText(path)
 
     def _sign(self):
@@ -195,7 +225,9 @@ class SignTab(QWidget):
         description = self.description.toPlainText()
 
         if not all([doc_path, key_path, cert_path, output_path]):
-            QMessageBox.warning(self, "Missing Input", "Please select all required files.")
+            QMessageBox.warning(
+                self, "Missing Input", "Please select all required files."
+            )
             return
 
         self.status.setText("Signing... please wait")
@@ -207,11 +239,15 @@ class SignTab(QWidget):
                 Path(key_path),
                 Path(cert_path),
                 Path(output_path),
-                description
+                description,
             )
 
         thread = WorkerThread(sign_op, parent=self)
-        thread.success.connect(lambda msg: self._on_success(f"Document signed successfully!\nSaved to: {output_path}"))
+        thread.success.connect(
+            lambda msg: self._on_success(
+                f"Document signed successfully!\nSaved to: {output_path}"
+            )
+        )
         thread.error.connect(self._on_error)
         thread.finished.connect(lambda: self._set_ready("Ready to sign documents"))
         thread.start()
@@ -320,7 +356,9 @@ class VerifyTab(QWidget):
         env_path = self.envelope_path.text()
 
         if not env_path:
-            QMessageBox.warning(self, "Missing Input", "Please select the envelope to verify.")
+            QMessageBox.warning(
+                self, "Missing Input", "Please select the envelope to verify."
+            )
             return
 
         self.status.setText("Verifying... please wait")
@@ -340,7 +378,7 @@ class VerifyTab(QWidget):
     def _display_results(self, result_str: str):
         """Display verification results."""
         try:
-            from ..core.verification import VerificationResult
+
             # Parse and display the result
             self.results.setText(result_str)
             self.status.setText("Signature is valid")
@@ -404,7 +442,9 @@ class EncryptTab(QWidget):
         layout.addStretch()
         self.setLayout(layout)
 
-    def _create_file_selector(self, label: str, attr: str, save: bool = False) -> QGroupBox:
+    def _create_file_selector(
+        self, label: str, attr: str, save: bool = False
+    ) -> QGroupBox:
         """Create a file selector group."""
         group = QGroupBox(label)
         layout = QHBoxLayout()
@@ -432,10 +472,12 @@ class EncryptTab(QWidget):
 
     def _browse_save(self, field: QLineEdit):
         """Open file browser for saving files."""
-        path, _ = QFileDialog.getSaveFileName(self, "Save As", filter="DocSeal Envelopes (*.dseal)")
+        path, _ = QFileDialog.getSaveFileName(
+            self, "Save As", filter="DocSeal Envelopes (*.dseal)"
+        )
         if path:
-            if not path.endswith('.dseal'):
-                path += '.dseal'
+            if not path.endswith(".dseal"):
+                path += ".dseal"
             field.setText(path)
 
     def _encrypt(self):
@@ -445,17 +487,25 @@ class EncryptTab(QWidget):
         output_path = self.output_path.text()
 
         if not all([doc_path, cert_path, output_path]):
-            QMessageBox.warning(self, "Missing Input", "Please select all required files.")
+            QMessageBox.warning(
+                self, "Missing Input", "Please select all required files."
+            )
             return
 
         self.status.setText("Encrypting... please wait")
         self.status.setStyleSheet("color: #f39c12; padding: 10px;")
 
         def encrypt_op():
-            return self.service.encrypt(Path(doc_path), Path(cert_path), Path(output_path))
+            return self.service.encrypt(
+                Path(doc_path), Path(cert_path), Path(output_path)
+            )
 
         thread = WorkerThread(encrypt_op, parent=self)
-        thread.success.connect(lambda: self._on_success(f"Document encrypted successfully!\nSaved to: {output_path}"))
+        thread.success.connect(
+            lambda: self._on_success(
+                f"Document encrypted successfully!\nSaved to: {output_path}"
+            )
+        )
         thread.error.connect(self._on_error)
         thread.finished.connect(lambda: None)
         thread.start()
@@ -540,7 +590,9 @@ class DecryptTab(QWidget):
         layout.addStretch()
         self.setLayout(layout)
 
-    def _create_file_selector(self, label: str, attr: str, save: bool = False) -> QGroupBox:
+    def _create_file_selector(
+        self, label: str, attr: str, save: bool = False
+    ) -> QGroupBox:
         """Create a file selector group."""
         group = QGroupBox(label)
         layout = QHBoxLayout()
@@ -579,17 +631,25 @@ class DecryptTab(QWidget):
         output_path = self.output_path.text()
 
         if not all([env_path, key_path, output_path]):
-            QMessageBox.warning(self, "Missing Input", "Please select all required files.")
+            QMessageBox.warning(
+                self, "Missing Input", "Please select all required files."
+            )
             return
 
         self.status.setText("Decrypting... please wait")
         self.status.setStyleSheet("color: #f39c12; padding: 10px;")
 
         def decrypt_op():
-            return self.service.decrypt(Path(env_path), Path(key_path), Path(output_path))
+            return self.service.decrypt(
+                Path(env_path), Path(key_path), Path(output_path)
+            )
 
         thread = WorkerThread(decrypt_op, parent=self)
-        thread.success.connect(lambda: self._on_success(f"Document decrypted successfully!\nSaved to: {output_path}"))
+        thread.success.connect(
+            lambda: self._on_success(
+                f"Document decrypted successfully!\nSaved to: {output_path}"
+            )
+        )
         thread.error.connect(self._on_error)
         thread.finished.connect(lambda: None)
         thread.start()
@@ -603,7 +663,9 @@ class DecryptTab(QWidget):
                 self.key_path.setText(str(self.ca_manager.ca_key_path))
                 self.key_path.setReadOnly(True)
             else:
-                QMessageBox.warning(self, "CA not available", "Initialize the CA in the CA tab first.")
+                QMessageBox.warning(
+                    self, "CA not available", "Initialize the CA in the CA tab first."
+                )
                 self.use_ca_checkbox.setChecked(False)
         else:
             self.key_path.setReadOnly(False)
@@ -624,6 +686,7 @@ class DecryptTab(QWidget):
         self.status.setText(error)
         self.status.setStyleSheet("color: #e74c3c; padding: 10px;")
         QMessageBox.critical(self, "Error", error)
+
 
 class SignEncryptTab(QWidget):
     """Tab for signing and encrypting documents (two-layer envelope)."""
@@ -670,7 +733,9 @@ class SignEncryptTab(QWidget):
         layout.addWidget(ca_group)
 
         # Document selection
-        doc_group = self._create_file_selector("Document to Sign & Encrypt:", "document_path")
+        doc_group = self._create_file_selector(
+            "Document to Sign & Encrypt:", "document_path"
+        )
         layout.addWidget(doc_group)
 
         # Signer key selection
@@ -682,7 +747,9 @@ class SignEncryptTab(QWidget):
         layout.addWidget(signer_cert_group)
 
         # Recipient certificate selection
-        recipient_cert_group = self._create_file_selector("Recipient's Certificate:", "recipient_cert_path")
+        recipient_cert_group = self._create_file_selector(
+            "Recipient's Certificate:", "recipient_cert_path"
+        )
         layout.addWidget(recipient_cert_group)
 
         # Description field
@@ -690,7 +757,9 @@ class SignEncryptTab(QWidget):
         desc_layout = QVBoxLayout()
         self.description = QTextEdit()
         self.description.setMinimumHeight(60)
-        self.description.setPlaceholderText("Enter signature description (e.g., 'Approved by Finance Team')")
+        self.description.setPlaceholderText(
+            "Enter signature description (e.g., 'Approved by Finance Team')"
+        )
         desc_layout.addWidget(self.description)
         desc_group.setLayout(desc_layout)
         layout.addWidget(desc_group)
@@ -714,7 +783,9 @@ class SignEncryptTab(QWidget):
         layout.addStretch()
         self.setLayout(layout)
 
-    def _create_file_selector(self, label: str, attr: str, save: bool = False) -> QGroupBox:
+    def _create_file_selector(
+        self, label: str, attr: str, save: bool = False
+    ) -> QGroupBox:
         """Create a file selector group."""
         group = QGroupBox(label)
         layout = QHBoxLayout()
@@ -742,10 +813,12 @@ class SignEncryptTab(QWidget):
 
     def _browse_save(self, field: QLineEdit):
         """Open file browser for saving files."""
-        path, _ = QFileDialog.getSaveFileName(self, "Save As", filter="DocSeal Envelopes (*.dseal)")
+        path, _ = QFileDialog.getSaveFileName(
+            self, "Save As", filter="DocSeal Envelopes (*.dseal)"
+        )
         if path:
-            if not path.endswith('.dseal'):
-                path += '.dseal'
+            if not path.endswith(".dseal"):
+                path += ".dseal"
             field.setText(path)
 
     def _sign_encrypt(self):
@@ -758,7 +831,9 @@ class SignEncryptTab(QWidget):
         description = self.description.toPlainText()
 
         if not all([doc_path, key_path, cert_path, recipient_cert_path, output_path]):
-            QMessageBox.warning(self, "Missing Input", "Please select all required files.")
+            QMessageBox.warning(
+                self, "Missing Input", "Please select all required files."
+            )
             return
 
         self.status.setText("Signing and encrypting... please wait")
@@ -771,12 +846,14 @@ class SignEncryptTab(QWidget):
                 Path(cert_path),
                 Path(recipient_cert_path),
                 Path(output_path),
-                description
+                description,
             )
 
         thread = WorkerThread(sign_encrypt_op, parent=self)
         thread.success.connect(
-            lambda: self._on_success(f"Document signed and encrypted successfully!\nSaved to: {output_path}")
+            lambda: self._on_success(
+                f"Document signed and encrypted successfully!\nSaved to: {output_path}"
+            )
         )
         thread.error.connect(self._on_error)
         thread.finished.connect(lambda: None)
@@ -793,7 +870,9 @@ class SignEncryptTab(QWidget):
                 self.key_path.setReadOnly(True)
                 self.cert_path.setReadOnly(True)
             else:
-                QMessageBox.warning(self, "CA not available", "Initialize the CA in the CA tab first.")
+                QMessageBox.warning(
+                    self, "CA not available", "Initialize the CA in the CA tab first."
+                )
                 self.use_ca_checkbox.setChecked(False)
         else:
             self.key_path.setReadOnly(False)
@@ -874,7 +953,9 @@ class DecryptVerifyTab(QWidget):
         layout.addWidget(key_group)
 
         # Trusted certificates (for verification)
-        trusted_group = self._create_file_selector("Trusted CA Certificate (Optional):", "trusted_cert_path")
+        trusted_group = self._create_file_selector(
+            "Trusted CA Certificate (Optional):", "trusted_cert_path"
+        )
         layout.addWidget(trusted_group)
 
         # Output file
@@ -906,7 +987,9 @@ class DecryptVerifyTab(QWidget):
         layout.addStretch()
         self.setLayout(layout)
 
-    def _create_file_selector(self, label: str, attr: str, save: bool = False) -> QGroupBox:
+    def _create_file_selector(
+        self, label: str, attr: str, save: bool = False
+    ) -> QGroupBox:
         """Create a file selector group."""
         group = QGroupBox(label)
         layout = QHBoxLayout()
@@ -946,7 +1029,9 @@ class DecryptVerifyTab(QWidget):
         trusted_cert_path = self.trusted_cert_path.text()
 
         if not all([env_path, key_path, output_path]):
-            QMessageBox.warning(self, "Missing Input", "Please select all required files.")
+            QMessageBox.warning(
+                self, "Missing Input", "Please select all required files."
+            )
             return
 
         self.status.setText("Decrypting and verifying... please wait")
@@ -957,12 +1042,15 @@ class DecryptVerifyTab(QWidget):
                 Path(env_path),
                 Path(key_path),
                 Path(output_path),
-                Path(trusted_cert_path) if trusted_cert_path else None
+                Path(trusted_cert_path) if trusted_cert_path else None,
             )
 
         thread = WorkerThread(decrypt_verify_op, parent=self)
         thread.success.connect(
-            lambda: self._on_success(f"Document decrypted and verified successfully!\nSaved to: {output_path}")
+            lambda: self._on_success(
+                f"Document decrypted and verified successfully!\nSaved "
+                f"to: {output_path}"
+            )
         )
         thread.error.connect(self._on_error)
         thread.finished.connect(lambda: None)
@@ -972,7 +1060,9 @@ class DecryptVerifyTab(QWidget):
         """Handle successful operation."""
         self.status.setText(message)
         self.status.setStyleSheet("color: #27ae60; padding: 10px;")
-        self.result_display.setText("Signature verification PASSED\nDocument is authentic and unmodified.")
+        self.result_display.setText(
+            "Signature verification PASSED\nDocument is authentic and unmodified."
+        )
         QMessageBox.information(self, "Success", message)
         # Reset form
         self.envelope_path.setText("")
@@ -996,7 +1086,9 @@ class DecryptVerifyTab(QWidget):
                 self.key_path.setText(str(self.ca_manager.ca_key_path))
                 self.key_path.setReadOnly(True)
             else:
-                QMessageBox.warning(self, "CA not available", "Initialize the CA in the CA tab first.")
+                QMessageBox.warning(
+                    self, "CA not available", "Initialize the CA in the CA tab first."
+                )
                 self.use_ca_checkbox.setChecked(False)
         else:
             self.key_path.setReadOnly(False)

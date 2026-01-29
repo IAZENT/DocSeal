@@ -1,12 +1,17 @@
 """Login screen for DocSeal GUI."""
 
 from typing import Callable
-from PyQt6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit,
-    QPushButton, QMessageBox
-)
+
 from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QFont, QPixmap
+from PyQt6.QtGui import QFont
+from PyQt6.QtWidgets import (
+    QLabel,
+    QLineEdit,
+    QMessageBox,
+    QPushButton,
+    QVBoxLayout,
+    QWidget,
+)
 
 from .auth import AuthenticationManager
 
@@ -14,8 +19,9 @@ from .auth import AuthenticationManager
 class LoginScreen(QWidget):
     """Login screen widget."""
 
-    def __init__(self, auth_manager: AuthenticationManager, 
-                 on_success: Callable[[], None]) -> None:
+    def __init__(
+        self, auth_manager: AuthenticationManager, on_success: Callable[[], None]
+    ) -> None:
         """
         Initialize the login screen.
 
@@ -87,7 +93,8 @@ class LoginScreen(QWidget):
         # Login button
         login_btn = QPushButton("Login")
         login_btn.setMinimumHeight(50)
-        login_btn.setStyleSheet("""
+        login_btn.setStyleSheet(
+            """
             QPushButton {
                 background-color: #3498db;
                 color: white;
@@ -102,7 +109,8 @@ class LoginScreen(QWidget):
             QPushButton:pressed {
                 background-color: #1f618d;
             }
-        """)
+        """
+        )
         login_btn.clicked.connect(self._login)
         container_layout.addWidget(login_btn)
 
@@ -111,13 +119,15 @@ class LoginScreen(QWidget):
 
         # Footer
         from docseal import __version__
+
         footer = QLabel(f"DocSeal v{__version__} | Secure Document Management")
         footer.setAlignment(Qt.AlignmentFlag.AlignCenter)
         footer.setStyleSheet("color: #7f8c8d; font-size: 8pt;")
         layout.addWidget(footer)
 
         self.setLayout(layout)
-        self.setStyleSheet("""
+        self.setStyleSheet(
+            """
             LoginScreen {
                 background-color: #f5f6fa;
             }
@@ -130,7 +140,8 @@ class LoginScreen(QWidget):
             QLineEdit:focus {
                 border: 2px solid #3498db;
             }
-        """)
+        """
+        )
 
     def _login(self) -> None:
         """Handle login attempt."""
@@ -138,7 +149,9 @@ class LoginScreen(QWidget):
         password = self.password_input.text()
 
         if not username or not password:
-            QMessageBox.warning(self, "Input Error", "Please enter username and password")
+            QMessageBox.warning(
+                self, "Input Error", "Please enter username and password"
+            )
             return
 
         success, message = self.auth_manager.login(username, password)

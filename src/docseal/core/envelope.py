@@ -2,10 +2,10 @@
 
 import json
 import zipfile
-from dataclasses import dataclass, asdict, field
+from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Optional, Dict, Any
+from typing import Any, Dict, Optional
 from uuid import uuid4
 
 
@@ -27,7 +27,7 @@ class EnvelopeMetadata:
     description: Optional[str] = None
     format_version: Optional[str] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Initialize default values."""
         if self.timestamp is None:
             self.timestamp = datetime.now(timezone.utc).isoformat()

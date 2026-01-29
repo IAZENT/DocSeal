@@ -1,12 +1,12 @@
 """Signature verification for envelopes."""
 
 from dataclasses import dataclass
-from typing import Optional
+from typing import Iterable, Optional, cast
 
 from cryptography import x509
 from cryptography.exceptions import InvalidSignature
-from cryptography.hazmat.primitives import hashes, serialization
-from cryptography.hazmat.primitives.asymmetric import padding
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.asymmetric import padding, rsa
 
 from .envelope import DsealEnvelope
 
@@ -63,6 +63,8 @@ def verify_envelope(
 
         # Get signer's public key from certificate
         public_key = signer_cert.public_key()
+        if not isinstance(public_key, rsa.RSAPublicKey):
+            raise ValueError("Unsupported public key type; RSA required")
 
         # Verify signature on payload
         if envelope.payload is None:
@@ -88,8 +90,8 @@ def verify_envelope(
                 x509.oid.NameOID.COMMON_NAME
             )
             if cn_attrs:
-                signer_name = cn_attrs[0].value
-        except Exception:
+                signer_name = str(cn_attrs[0].value)
+        except Exception:  # noqa: S110
             pass
 
         # Try to get email
@@ -97,7 +99,8 @@ def verify_envelope(
             san = signer_cert.extensions.get_extension_for_oid(
                 x509.oid.ExtensionOID.SUBJECT_ALTERNATIVE_NAME
             )
-            for name in san.value:
+            san_value = cast(Iterable[x509.GeneralName], san.value)
+            for name in san_value:
                 if isinstance(name, x509.RFC822Name):
                     signer_email = name.value
                     break
@@ -106,18 +109,8 @@ def verify_envelope(
 
         # Optionally validate cert chain
         if trusted_certs:
-            # Simple validation: check if signer cert is in trusted list
-            # or check if it's self-signed
-            cert_valid = False
-            for trusted_cert in trusted_certs:
-                if signer_cert == trusted_cert:
-                    cert_valid = True
-                    break
-
-            # If not found, at least check it's self-signed
-            if not cert_valid:
-                if signer_cert.issuer == signer_cert.subject:
-                    cert_valid = True  # Self-signed is acceptable for testing
+            # Simple validation: signer cert must be explicitly trusted.
+            cert_valid = any(signer_cert == trusted for trusted in trusted_certs)
 
             if not cert_valid:
                 return VerificationResult(

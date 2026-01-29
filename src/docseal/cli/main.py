@@ -4,10 +4,10 @@ import argparse
 import sys
 
 from docseal.cli.ca import register_ca_commands
+from docseal.cli.decrypt import register_decrypt_command
+from docseal.cli.encrypt import register_encrypt_command
 from docseal.cli.sign import register_sign_command
 from docseal.cli.verify import register_verify_command
-from docseal.cli.encrypt import register_encrypt_command
-from docseal.cli.decrypt import register_decrypt_command
 
 
 def create_parser() -> argparse.ArgumentParser:
@@ -28,7 +28,8 @@ Examples:
   docseal encrypt --document data.pdf --recipient-cert recipient.pem
 
   # Decrypt and verify
-  docseal decrypt --envelope data.dseal --private-key recipient_key.pem --verify signer.pem
+  docseal decrypt --envelope data.dseal --private-key recipient_key.pem \\
+    --verify signer.pem
 
 For more information, visit: https://github.com/yourusername/docseal
         """,

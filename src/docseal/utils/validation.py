@@ -68,7 +68,7 @@ def validate_certificate_chain(
         # DSA
         elif isinstance(public_key, DSAPublicKey):
             if alg is None:
-                return False
+                return False  # pragma: no cover - defensive guard
             public_key.verify(
                 cert.signature,
                 cert.tbs_certificate_bytes,

@@ -1,14 +1,20 @@
 """CA management tabs for DocSeal GUI."""
 
-from pathlib import Path
-from PyQt6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QLineEdit,
-    QTextEdit, QGroupBox, QMessageBox, QComboBox, QSpinBox
-)
-from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QFont
+from PyQt6.QtWidgets import (
+    QComboBox,
+    QGroupBox,
+    QLabel,
+    QLineEdit,
+    QMessageBox,
+    QPushButton,
+    QSpinBox,
+    QTextEdit,
+    QVBoxLayout,
+    QWidget,
+)
 
-from .ca_manager import CertificateAuthority, CAInfo
+from .ca_manager import CAInfo, CertificateAuthority
 
 
 class InitializeCATab(QWidget):
@@ -37,7 +43,9 @@ class InitializeCATab(QWidget):
         # Check if CA exists
         if self.ca_manager.ca_exists():
             status_label = QLabel("✓ CA Already Initialized")
-            status_label.setStyleSheet("color: #27ae60; font-size: 12pt; font-weight: bold;")
+            status_label.setStyleSheet(
+                "color: #27ae60; font-size: 12pt; font-weight: bold;"
+            )
             layout.addWidget(status_label)
 
             # Show CA info
@@ -120,17 +128,27 @@ class InitializeCATab(QWidget):
     def _initialize_ca(self) -> None:
         """Initialize the CA."""
         # Basic field check
-        if not all([self.ca_name.text(), self.organization.text(),
-                   self.country.text(), self.state.text(),
-                   self.city.text(), self.email.text()]):
+        if not all(
+            [
+                self.ca_name.text(),
+                self.organization.text(),
+                self.country.text(),
+                self.state.text(),
+                self.city.text(),
+                self.email.text(),
+            ]
+        ):
             QMessageBox.warning(self, "Missing Input", "Please fill all fields")
             return
 
         # Validate country code (must be exactly 2 characters)
         country = self.country.text().strip()
         if len(country) != 2:
-            QMessageBox.warning(self, "Invalid Country", 
-                              "Country code must be exactly 2 characters (e.g., 'US', 'NP')")
+            QMessageBox.warning(
+                self,
+                "Invalid Country",
+                "Country code must be exactly 2 characters (e.g., 'US', 'NP')",
+            )
             return
 
         ca_info = CAInfo(
@@ -140,7 +158,7 @@ class InitializeCATab(QWidget):
             state=self.state.text().strip(),
             city=self.city.text().strip(),
             email=self.email.text().strip(),
-            valid_days=self.valid_days.value()
+            valid_days=self.valid_days.value(),
         )
 
         success, message = self.ca_manager.initialize_ca(ca_info)
@@ -183,9 +201,7 @@ class IssueCATab(QWidget):
             warning_label.setStyleSheet("color: #f39c12; font-size: 12pt;")
             layout.addWidget(warning_label)
 
-            info_label = QLabel(
-                "Please initialize a CA first using '🏛️ Init CA' tab"
-            )
+            info_label = QLabel("Please initialize a CA first using '🏛️ Init CA' tab")
             info_label.setStyleSheet("color: #7f8c8d;")
             layout.addWidget(info_label)
 
@@ -249,7 +265,7 @@ class IssueCATab(QWidget):
             common_name=self.common_name.text(),
             organization=self.org.text(),
             email=self.cert_email.text(),
-            valid_days=self.cert_valid_days.value()
+            valid_days=self.cert_valid_days.value(),
         )
 
         if success:
@@ -292,10 +308,14 @@ class RevokeCATab(QWidget):
 
         if not self.ca_manager.ca_exists():
             warning_label = QLabel("⚠️ No CA Initialized")
-            warning_label.setStyleSheet("color: #f39c12; font-size: 12pt; font-weight: bold;")
+            warning_label.setStyleSheet(
+                "color: #f39c12; font-size: 12pt; font-weight: bold;"
+            )
             layout.addWidget(warning_label)
 
-            info_label = QLabel("Please initialize a CA first using '🏛️ Initialize CA' tab")
+            info_label = QLabel(
+                "Please initialize a CA first using '🏛️ Initialize CA' tab"
+            )
             info_label.setStyleSheet("color: #7f8c8d;")
             layout.addWidget(info_label)
 
@@ -303,16 +323,21 @@ class RevokeCATab(QWidget):
         else:
             # Get list of certificates
             certs = self.ca_manager.list_certificates()
-            
+
             if not certs:
                 info_label = QLabel("ℹ️ No certificates to revoke")
-                info_label.setStyleSheet("color: #3498db; font-size: 11pt; padding: 15px; background-color: #ecf0f1; border-radius: 5px;")
+                info_label.setStyleSheet(
+                    "color: #3498db; font-size: 11pt; padding: 15px; "
+                    "background-color: #ecf0f1; border-radius: 5px;"
+                )
                 layout.addWidget(info_label)
-                
-                help_label = QLabel("Issue a certificate first in the '📜 Issue Certificate' tab")
+
+                help_label = QLabel(
+                    "Issue a certificate first in the '📜 Issue Certificate' tab"
+                )
                 help_label.setStyleSheet("color: #7f8c8d;")
                 layout.addWidget(help_label)
-                
+
                 layout.addStretch()
             else:
                 # Certificate selector group
@@ -333,30 +358,35 @@ class RevokeCATab(QWidget):
                 # Certificate details group
                 details_group = QGroupBox("Certificate Details")
                 details_layout = QVBoxLayout()
-                
+
                 self.details_text = QTextEdit()
                 self.details_text.setReadOnly(True)
                 self.details_text.setMaximumHeight(150)
-                self.details_text.setStyleSheet("""
+                self.details_text.setStyleSheet(
+                    """
                     QTextEdit {
                         background-color: #f8f9fa;
                         border: 1px solid #ddd;
                         border-radius: 4px;
                         padding: 10px;
                     }
-                """)
+                """
+                )
                 details_layout.addWidget(self.details_text)
-                
+
                 details_group.setLayout(details_layout)
                 layout.addWidget(details_group)
-                
+
                 # Load initial details
                 self._on_cert_selected()
 
                 # Warning box
                 warning_box = QGroupBox("⚠️ Warning")
                 warning_layout = QVBoxLayout()
-                warning_label = QLabel("Revoking a certificate cannot be undone. The certificate will no longer be valid for signing or verification.")
+                warning_label = QLabel(
+                    "Revoking a certificate cannot be undone. The certificate "
+                    "will no longer be valid for signing or verification."
+                )
                 warning_label.setWordWrap(True)
                 warning_label.setStyleSheet("color: #e74c3c; font-size: 10pt;")
                 warning_layout.addWidget(warning_label)
@@ -367,7 +397,8 @@ class RevokeCATab(QWidget):
                 # Revoke button
                 revoke_btn = QPushButton("❌ Revoke Selected Certificate")
                 revoke_btn.setMinimumHeight(45)
-                revoke_btn.setStyleSheet("""
+                revoke_btn.setStyleSheet(
+                    """
                     QPushButton {
                         background-color: #e74c3c;
                         color: white;
@@ -382,13 +413,16 @@ class RevokeCATab(QWidget):
                     QPushButton:pressed {
                         background-color: #a93226;
                     }
-                """)
+                """
+                )
                 revoke_btn.clicked.connect(self._revoke_certificate)
                 layout.addWidget(revoke_btn)
 
                 # Status
                 self.status = QLabel("")
-                self.status.setStyleSheet("color: #7f8c8d; padding: 10px; border-radius: 4px;")
+                self.status.setStyleSheet(
+                    "color: #7f8c8d; padding: 10px; border-radius: 4px;"
+                )
                 layout.addWidget(self.status)
 
                 layout.addStretch()
@@ -407,15 +441,19 @@ class RevokeCATab(QWidget):
         cert_name = self.cert_combo.currentText()
 
         if not cert_name:
-            QMessageBox.warning(self, "No Selection", "Please select a certificate to revoke")
+            QMessageBox.warning(
+                self, "No Selection", "Please select a certificate to revoke"
+            )
             return
 
         # Confirm revocation with strong warning
         reply = QMessageBox.warning(
-            self, "Confirm Revocation",
-            f"Are you sure you want to REVOKE certificate for:\n\n'{cert_name}'?\n\nThis action CANNOT be undone!",
+            self,
+            "Confirm Revocation",
+            f"Are you sure you want to REVOKE certificate for:\n\n"
+            f"'{cert_name}'?\n\nThis action CANNOT be undone!",
             QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
-            QMessageBox.StandardButton.No
+            QMessageBox.StandardButton.No,
         )
 
         if reply != QMessageBox.StandardButton.Yes:
@@ -430,8 +468,11 @@ class RevokeCATab(QWidget):
             if success:
                 QMessageBox.information(self, "✓ Success", message)
                 self.status.setText("✓ Certificate revoked successfully")
-                self.status.setStyleSheet("color: #27ae60; padding: 10px; background-color: #d5f4e6; border-radius: 4px;")
-                
+                self.status.setStyleSheet(
+                    "color: #27ae60; padding: 10px; background-color: #d5f4e6; "
+                    "border-radius: 4px;"
+                )
+
                 # Refresh combo box
                 self.cert_combo.currentIndexChanged.disconnect()
                 self.cert_combo.clear()
@@ -445,6 +486,11 @@ class RevokeCATab(QWidget):
             else:
                 QMessageBox.critical(self, "Error", message)
                 self.status.setText(f"✗ Error: {message}")
-                self.status.setStyleSheet("color: #e74c3c; padding: 10px; background-color: #fadbd8; border-radius: 4px;")
+                self.status.setStyleSheet(
+                    "color: #e74c3c; padding: 10px; background-color: #fadbd8; "
+                    "border-radius: 4px;"
+                )
         else:
-            QMessageBox.critical(self, "Error", f"Certificate file not found: {cert_path}")
+            QMessageBox.critical(
+                self, "Error", f"Certificate file not found: {cert_path}"
+            )

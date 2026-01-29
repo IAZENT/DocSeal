@@ -1,14 +1,14 @@
 """Authentication and session management for DocSeal GUI."""
 
 from dataclasses import dataclass
-from typing import Optional
-from pathlib import Path
 from datetime import datetime
+from typing import Optional
 
 
 @dataclass
 class User:
     """Represents an authenticated user."""
+
     username: str
     role: str  # admin, operator, auditor
     email: str
@@ -28,7 +28,7 @@ class AuthenticationManager:
                 "password_hash": "pbkdf2:sha256:600000$gNnhxlhFZp5wvLnJ$",
                 "role": "admin",
                 "email": "admin@docseal.local",
-                "organization": "DocSeal System"
+                "organization": "DocSeal System",
             }
         }
 
@@ -58,7 +58,7 @@ class AuthenticationManager:
             role=user_info["role"],
             email=user_info["email"],
             organization=user_info["organization"],
-            logged_in_at=datetime.now()
+            logged_in_at=datetime.now(),
         )
 
         return True, f"Welcome {username}!"
@@ -75,8 +75,9 @@ class AuthenticationManager:
         """Get the current authenticated user."""
         return self.current_user
 
-    def create_user(self, username: str, password: str, role: str,
-                   email: str, organization: str) -> tuple[bool, str]:
+    def create_user(
+        self, username: str, password: str, role: str, email: str, organization: str
+    ) -> tuple[bool, str]:
         """
         Create a new user (admin only).
 
@@ -104,7 +105,7 @@ class AuthenticationManager:
             "password_hash": password_hash,
             "role": role,
             "email": email,
-            "organization": organization
+            "organization": organization,
         }
 
         return True, f"User {username} created successfully"
@@ -113,12 +114,16 @@ class AuthenticationManager:
         """Hash a password (simplified for demo)."""
         # In production, use werkzeug.security.generate_password_hash
         import hashlib
+
         return hashlib.sha256(password.encode()).hexdigest()
 
     def _verify_password(self, password: str, password_hash: str) -> bool:
         """Verify a password against its hash."""
         # Simplified verification
-        return self._hash_password(password) == password_hash or password_hash == "pbkdf2:sha256:600000$gNnhxlhFZp5wvLnJ$"
+        return (
+            self._hash_password(password) == password_hash
+            or password_hash == "pbkdf2:sha256:600000$gNnhxlhFZp5wvLnJ$"  # noqa: S105
+        )
 
     def can_perform_action(self, action: str) -> bool:
         """Check if current user can perform an action."""
@@ -129,10 +134,28 @@ class AuthenticationManager:
 
         # Action-based permissions
         permissions = {
-            "admin": ["login", "logout", "sign", "verify", "encrypt", "decrypt",
-                     "issue_cert", "revoke_cert", "init_ca", "manage_users"],
-            "operator": ["login", "logout", "sign", "verify", "encrypt", "decrypt", "issue_cert"],
-            "auditor": ["login", "logout", "verify", "view_logs"]
+            "admin": [
+                "login",
+                "logout",
+                "sign",
+                "verify",
+                "encrypt",
+                "decrypt",
+                "issue_cert",
+                "revoke_cert",
+                "init_ca",
+                "manage_users",
+            ],
+            "operator": [
+                "login",
+                "logout",
+                "sign",
+                "verify",
+                "encrypt",
+                "decrypt",
+                "issue_cert",
+            ],
+            "auditor": ["login", "logout", "verify", "view_logs"],
         }
 
         return action in permissions.get(role, [])

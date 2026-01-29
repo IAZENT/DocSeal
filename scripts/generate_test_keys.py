@@ -69,13 +69,9 @@ def generate_test_keys_and_certs():
                 users[user_id].get("serial", hash(user_config["name"]) % 10000000)
             )
             .not_valid_before(datetime.now(timezone.utc))
-            .not_valid_after(
-                datetime.now(timezone.utc) + timedelta(days=validity_days)
-            )
+            .not_valid_after(datetime.now(timezone.utc) + timedelta(days=validity_days))
             .add_extension(
-                x509.SubjectAlternativeName(
-                    [x509.RFC822Name(user_config["email"])]
-                ),
+                x509.SubjectAlternativeName([x509.RFC822Name(user_config["email"])]),
                 critical=False,
             )
             .sign(private_key, hashes.SHA256())
@@ -94,7 +90,7 @@ def generate_test_keys_and_certs():
     print(f"  Users: {len(users)}")
     print(f"  Key size: RSA-{key_size}")
     print(f"  Certificate validity: {validity_days} days")
-    print(f"  Location: data/keys/ and data/certs/")
+    print("  Location: data/keys/ and data/certs/")
 
 
 if __name__ == "__main__":

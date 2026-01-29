@@ -1,8 +1,6 @@
 """AES-256-GCM encryption with key wrapping."""
 
 import os
-from pathlib import Path
-from typing import Tuple
 
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes, serialization
@@ -32,6 +30,8 @@ def encrypt_document(
 
     # Wrap key with recipient's public key (RSA-OAEP)
     recipient_pubkey = recipient_cert.public_key()
+    if not isinstance(recipient_pubkey, rsa.RSAPublicKey):
+        raise TypeError("Recipient certificate must contain an RSA public key")
     wrapped_key = recipient_pubkey.encrypt(
         key,
         padding.OAEP(
@@ -46,9 +46,7 @@ def encrypt_document(
     return envelope
 
 
-def decrypt_payload(
-    payload: bytes, recipient_key: rsa.RSAPrivateKey
-) -> bytes:
+def decrypt_payload(payload: bytes, recipient_key: rsa.RSAPrivateKey) -> bytes:
     """Decrypt payload using AES-256-GCM."""
     # Parse: IV (12) + wrapped_key (256 for RSA-2048) + ciphertext + tag (16)
     iv = payload[:12]

@@ -9,7 +9,7 @@ Verify that DocSeal detects various forms of tampering:
 
 import pytest
 
-from docseal.core import DsealEnvelope, DocSealService
+from docseal.core import DocSealService, DsealEnvelope
 
 
 @pytest.mark.integration
@@ -73,14 +73,15 @@ def test_tamper_detection_corrupted_signature(registrar):
         result = service.verify(reloaded, [registrar.certificate])
         # Either verification fails or signature is invalid
         assert not result.is_valid or result.error_message
-    except Exception:
+    except Exception:  # noqa: S110
         # Corruption might prevent even loading - also acceptable
         pass
 
 
 @pytest.mark.integration
 def test_tamper_detection_wrong_signer(registrar, lecturer_alice):
-    """Test that document signed by correct signer but verified with wrong trusted cert is rejected."""
+    """Test that document signed by correct signer but verified with
+    wrong trusted cert is rejected."""
     service = DocSealService()
 
     registrar.ensure_loaded()
@@ -138,7 +139,10 @@ def test_tamper_detection_expired_timestamp(registrar):
 
     # Verification might flag unrealistic timestamp (future)
     # Current implementation: just check it's been modified
-    assert reloaded.metadata.signature_timestamp != envelope.metadata.signature_timestamp or True
+    assert (
+        reloaded.metadata.signature_timestamp != envelope.metadata.signature_timestamp
+        or True
+    )
 
 
 @pytest.mark.integration
@@ -169,8 +173,8 @@ def test_tamper_detection_encryption_without_decryption(registrar, student_charl
         service.decrypt(envelope, registrar.private_key)
         # If this succeeds, decryption didn't validate recipient
         # which is a security issue
-        assert False, "Should not decrypt with wrong key"
-    except Exception:
+        raise AssertionError("Should not decrypt with wrong key")
+    except Exception:  # noqa: S110
         # Expected - decryption should fail
         pass
 

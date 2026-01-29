@@ -7,12 +7,13 @@ Scenario:
 4. Student receives encrypted envelope
 5. Student decrypts using their private key (gets signed envelope)
 6. Student verifies signature using registrar's cert (confirms authenticity)
-7. Employer cannot decrypt (no private key) but can verify registrar's signature on ciphertext
+7. Employer cannot decrypt (no private key) but can verify registrar's
+   signature on ciphertext
 """
 
 import pytest
 
-from docseal.core import DsealEnvelope, DocSealService
+from docseal.core import DocSealService, DsealEnvelope
 
 
 @pytest.mark.integration
@@ -62,7 +63,6 @@ def test_enrollment_encrypted_scenario(registrar, student_charlie, employer_eve)
     envelope_bytes = encrypted_envelope.to_bytes()
 
     # Step 4: Student receives encrypted envelope
-    from docseal.core import DsealEnvelope
 
     received_envelope = DsealEnvelope.from_bytes(envelope_bytes)
     assert received_envelope.metadata.payload_encrypted
@@ -87,8 +87,8 @@ def test_enrollment_encrypted_scenario(registrar, student_charlie, employer_eve)
     # Attempting to decrypt without the right key should fail
     try:
         service.decrypt(received_envelope_copy, employer_eve.private_key)
-        assert False, "Should not be able to decrypt with wrong key"
-    except Exception:
+        raise AssertionError("Should not be able to decrypt with wrong key")
+    except Exception:  # noqa: S110
         # Expected to fail
         pass
 
@@ -143,8 +143,8 @@ def test_multiple_recipients(registrar, student_charlie, student_diana):
     # Charlie cannot decrypt Diana's envelope
     try:
         service.decrypt(envelope_diana, student_charlie.private_key)
-        assert False, "Charlie should not decrypt Diana's envelope"
-    except Exception:
+        raise AssertionError("Charlie should not decrypt Diana's envelope")
+    except Exception:  # noqa: S110
         # Expected
         pass
 
@@ -174,8 +174,6 @@ def test_encryption_without_signing(registrar, student_charlie):
 
     # Student decrypts
     envelope_bytes = encrypted_envelope.to_bytes()
-
-    from docseal.core import DsealEnvelope
 
     received = DsealEnvelope.from_bytes(envelope_bytes)
     decrypted = service.decrypt(received, student_charlie.private_key)

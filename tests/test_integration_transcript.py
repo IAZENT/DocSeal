@@ -10,7 +10,7 @@ Scenario:
 
 import pytest
 
-from docseal.core import DsealEnvelope, DocSealService
+from docseal.core import DocSealService, DsealEnvelope
 
 
 @pytest.mark.integration
@@ -118,7 +118,7 @@ def test_transcript_tamper_detection(registrar):
         # Verification should fail or flag as invalid
         # The specific outcome depends on where tampering occurred
         assert not result.is_valid or result.error_message
-    except Exception:
+    except Exception:  # noqa: S110
         # Deserialization or verification failed - also acceptable
         pass
 

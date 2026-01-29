@@ -1,8 +1,11 @@
 """GUI application entry point for DocSeal."""
 
 import sys
+
 from PyQt6.QtWidgets import QApplication
+
 from docseal import __version__
+
 from .main_window import MainWindow
 
 

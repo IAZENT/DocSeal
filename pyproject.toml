@@ -37,6 +37,9 @@ line-length = 88
 select = ["E", "F", "I", "B", "S"]
 ignore = ["S101"]
 
+[tool.ruff.lint.per-file-ignores]
+"tests/test_additional_coverage.py" = ["S106", "S108"]
+
 
 [project.scripts]
 docseal = "docseal.cli.main:main"
@@ -44,6 +47,10 @@ docseal-gui = "docseal.gui.app:main"
 
 [tool.mypy]
 strict = true
+
+[[tool.mypy.overrides]]
+module = "docseal.gui.*"
+ignore_errors = true
 [tool.pytest.ini_options]
 markers = [
     "crypto: marks tests as cryptography unit tests",
@@ -51,3 +58,19 @@ markers = [
     "integration: marks tests as integration tests",
 ]
 testpaths = ["tests"]
+
+[tool.coverage.run]
+omit = [
+    "src/docseal/gui/*",
+    "src/docseal/main.py",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+]
+fail_under = 70

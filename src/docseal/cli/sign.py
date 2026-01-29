@@ -1,14 +1,14 @@
 """Document signing CLI command."""
 
 import argparse
-import sys
 from pathlib import Path
 
 from cryptography import x509
 from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric import rsa
 
+from docseal.cli.colors import error, info, success
 from docseal.core import DocSealService
-from docseal.cli.colors import error, success, info
 
 
 def register_sign_command(
@@ -90,11 +90,14 @@ def cmd_sign(args: argparse.Namespace) -> int:
         # Load private key
         key_pem = key_path.read_bytes()
         private_key = serialization.load_pem_private_key(key_pem, password=None)
+        if not isinstance(private_key, rsa.RSAPrivateKey):
+            error("Private key must be RSA")
+            return 1
 
         # Load certificate
         cert_pem = cert_path.read_bytes()
         certificate = x509.load_pem_x509_certificate(cert_pem)
-        info(f"Loaded signer certificate")
+        info("Loaded signer certificate")
 
         # Sign document
         service = DocSealService()
