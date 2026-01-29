@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "docseal"
-version = "0.1.0"
+version = "2.0.0"
 description = "Secure academic document signing and verification tool"
 authors = [{ name = "Rupesh Thakur" }]
 readme = "README.md"
@@ -15,6 +15,9 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+gui = [
+    "PyQt6>=6.6.0",
+]
 dev = [
     "pytest",
     "pytest-cov",
@@ -24,6 +27,7 @@ dev = [
     "types-cryptography",
     "pip-audit",
     "bandit",
+    "PyQt6>=6.6.0",
 ]
 
 [tool.ruff]
@@ -36,6 +40,14 @@ ignore = ["S101"]
 
 [project.scripts]
 docseal = "docseal.cli.main:main"
+docseal-gui = "docseal.gui.app:main"
 
 [tool.mypy]
 strict = true
+[tool.pytest.ini_options]
+markers = [
+    "crypto: marks tests as cryptography unit tests",
+    "cli: marks tests as CLI interface tests",
+    "integration: marks tests as integration tests",
+]
+testpaths = ["tests"]

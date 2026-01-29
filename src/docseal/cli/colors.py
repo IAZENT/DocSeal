@@ -42,3 +42,28 @@ class Colors:
     def bold(cls, text: str) -> str:
         """Return text in bold."""
         return f"{cls.BOLD}{text}{cls.RESET}"
+
+# Convenience functions for direct use
+def success(text: str) -> None:
+    """Print text in green (success)."""
+    print(Colors.success(text))
+
+
+def error(text: str) -> None:
+    """Print text in red (error)."""
+    print(Colors.error(text), file=sys.stderr)
+
+
+def warning(text: str) -> None:
+    """Print text in yellow (warning)."""
+    print(Colors.warning(text))
+
+
+def info(text: str) -> None:
+    """Print text in blue (info)."""
+    print(Colors.info(text))
+
+
+def bold(text: str) -> None:
+    """Print text in bold."""
+    print(Colors.bold(text))

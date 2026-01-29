@@ -1,60 +1,39 @@
 """Document verification CLI command."""
 
-from __future__ import annotations
-
 import argparse
 import sys
 from pathlib import Path
 
 from cryptography import x509
 
-from docseal.audit.logger import AuditLogger
-from docseal.ca.revocation import RevocationRegistry
-from docseal.crypto.verification import verify_document_signature
-
-# Default paths
-CA_DIR = Path.home() / ".docseal" / "ca"
-CA_PEM_PATH = CA_DIR / "ca.pem"
-REVOCATION_PATH = CA_DIR / "crl.json"
-AUDIT_LOG_PATH = CA_DIR / "audit.log"
+from docseal.core import DsealEnvelope, DocSealService
+from docseal.cli.colors import error, success, info, warning
 
 
 def register_verify_command(
-    subparsers: argparse._SubParsersAction[argparse.ArgumentParser],
+    subparsers: argparse._SubParsersAction,  # type: ignore
 ) -> None:
     """Register the verify command."""
     verify_parser = subparsers.add_parser(
         "verify",
         help="Verify a document signature",
-        description="Verify the cryptographic signature of a document",
+        description="Verify the cryptographic signature in a .dseal envelope",
     )
 
     verify_parser.add_argument(
-        "--doc",
+        "--envelope",
+        "-e",
         required=True,
-        help="Path to document to verify",
+        help="Path to .dseal envelope file",
     )
     verify_parser.add_argument(
-        "--sig",
-        required=True,
-        help="Path to signature file (.sig)",
-    )
-    verify_parser.add_argument(
-        "--ca",
-        help=f"Path to CA certificate (default: {CA_PEM_PATH})",
-    )
-    verify_parser.add_argument(
-        "--no-revocation-check",
-        action="store_true",
-        help="Skip certificate revocation checking",
-    )
-    verify_parser.add_argument(
-        "--no-audit",
-        action="store_true",
-        help="Skip audit logging",
+        "--cert",
+        "-c",
+        help="Path to signer's X.509 certificate (PEM format) for trust validation",
     )
     verify_parser.add_argument(
         "--verbose",
+        "-v",
         action="store_true",
         help="Show detailed verification information",
     )
@@ -62,98 +41,69 @@ def register_verify_command(
     verify_parser.set_defaults(func=cmd_verify)
 
 
-def cmd_verify(args: argparse.Namespace) -> None:
+def cmd_verify(args: argparse.Namespace) -> int:
     """Verify a document signature."""
-    # Validate input files
-    doc_path = Path(args.doc)
-    if not doc_path.exists():
-        print(f"[!] Document not found: {doc_path}", file=sys.stderr)
-        sys.exit(1)
-
-    if not doc_path.is_file():
-        print(f"[!] Not a file: {doc_path}", file=sys.stderr)
-        sys.exit(1)
-
-    sig_path = Path(args.sig)
-    if not sig_path.exists():
-        print(f"[!] Signature not found: {sig_path}", file=sys.stderr)
-        sys.exit(1)
-
-    # Load CA certificate
-    ca_path = Path(args.ca) if args.ca else CA_PEM_PATH
-    if not ca_path.exists():
-        print(
-            f"[!] CA certificate not found: {ca_path}",
-            file=sys.stderr,
-        )
-        print("    Run 'docseal ca init' first or specify --ca", file=sys.stderr)
-        sys.exit(1)
-
     try:
-        ca_cert_pem = ca_path.read_bytes()
-        ca_cert = x509.load_pem_x509_certificate(ca_cert_pem)
-    except Exception as e:
-        print(f"[!] Failed to load CA certificate: {e}", file=sys.stderr)
-        sys.exit(1)
+        # Validate input file
+        envelope_path = Path(args.envelope)
+        if not envelope_path.exists():
+            error(f"Envelope file not found: {envelope_path}")
+            return 1
 
-    # Setup revocation checking
-    revocation_registry = None
-    if not args.no_revocation_check:
-        if REVOCATION_PATH.exists():
-            revocation_registry = RevocationRegistry(REVOCATION_PATH)
-        elif args.verbose:
-            print("[i] No revocation list found, skipping revocation check")
+        if not envelope_path.is_file():
+            error(f"Not a file: {envelope_path}")
+            return 1
 
-    # Setup audit logging
-    audit_logger = None
-    if not args.no_audit:
-        AUDIT_LOG_PATH.parent.mkdir(parents=True, exist_ok=True)
-        audit_logger = AuditLogger(AUDIT_LOG_PATH)
+        # Load envelope
+        envelope_bytes = envelope_path.read_bytes()
+        envelope = DsealEnvelope.from_bytes(envelope_bytes)
+        info(f"Loaded envelope from: {envelope_path}")
 
-    # Verify signature
-    try:
-        if args.verbose:
-            print("Verifying signature...")
-            print(f"  Document:  {doc_path}")
-            print(f"  Signature: {sig_path}")
-            print(f"  CA:        {ca_path}")
+        # Load trusted certificate if provided
+        trusted_certs = None
+        if args.cert:
+            cert_path = Path(args.cert)
+            if not cert_path.exists():
+                error(f"Certificate not found: {cert_path}")
+                return 1
+            cert_pem = cert_path.read_bytes()
+            trusted_cert = x509.load_pem_x509_certificate(cert_pem)
+            trusted_certs = [trusted_cert]
 
-        result = verify_document_signature(
-            document_path=doc_path,
-            signature_path=sig_path,
-            trusted_ca_cert=ca_cert,
-            revocation_registry=revocation_registry,
-            audit_logger=audit_logger,
-        )
+        # Verify signature
+        service = DocSealService()
+        result = service.verify(envelope, trusted_certs)
 
-        # Success output
-        print("\nSIGNATURE VALID")
-        print(f"  Signer:      {result['signer']}")
-        print(f"  Document ID: {result['document_id']}")
-        print(f"  Timestamp:   {result['timestamp']}")
+        # Display results
+        if result.is_valid:
+            success("✓ Signature is valid")
+        else:
+            warning("✗ Signature verification failed")
+            if result.error_message:
+                error(f"  Error: {result.error_message}")
+            return 1
 
-        if audit_logger and not args.no_audit:
-            print(f"  Audit log:   {AUDIT_LOG_PATH}")
+        # Display detailed information
+        if args.verbose or args.cert:
+            print()
+            if result.signer_name:
+                info(f"Signer: {result.signer_name}")
+            if result.signer_email:
+                info(f"Email: {result.signer_email}")
+            if result.signature_timestamp:
+                info(f"Timestamp: {result.signature_timestamp}")
+            if envelope.metadata.description:
+                info(f"Description: {envelope.metadata.description}")
+            if result.is_encrypted:
+                warning("Payload is encrypted")
+            else:
+                success("Payload is plaintext")
 
-        if args.verbose:
-            print("\n[i] All verification checks passed:")
-            print("    - Certificate trust chain")
-            print("    - Certificate validity period")
-            if not args.no_revocation_check:
-                print("    - Certificate revocation status")
-            print("    - Document hash integrity")
-            print("    - Cryptographic signature")
-
-    except ValueError as e:
-        # Verification failed
-        print("\nSIGNATURE INVALID", file=sys.stderr)
-        print(f"  Reason: {e}", file=sys.stderr)
-
-        if audit_logger and not args.no_audit:
-            print(f"  Audit log: {AUDIT_LOG_PATH}", file=sys.stderr)
-
-        sys.exit(1)
+        return 0
 
     except Exception as e:
-        print(f"[!] Verification error: {e}", file=sys.stderr)
-        sys.exit(1)
+        error(f"Verification failed: {e}")
+        if args.verbose:
+            import traceback
+            traceback.print_exc()
+        return 1
